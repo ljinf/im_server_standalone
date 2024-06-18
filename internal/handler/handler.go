@@ -2,8 +2,8 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/ljinf/im_server_standalone/pkg/jwt"
 	"github.com/ljinf/im_server_standalone/pkg/log"
-	"time"
 )
 
 type Handler struct {
@@ -18,9 +18,10 @@ func NewHandler(
 	}
 }
 func GetUserIdFromCtx(ctx *gin.Context) int64 {
-	//v, exists := ctx.Get("claims")
-	//if !exists {
-	//	return ""
-	//}
-	return time.Now().Unix()
+	v, exists := ctx.Get("claims")
+	if !exists {
+		return 0
+	}
+	userInfo := v.(*jwt.MyCustomClaims)
+	return userInfo.UserId
 }

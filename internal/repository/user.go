@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	v1 "github.com/ljinf/im_server_standalone/api/v1"
+	"github.com/ljinf/im_server_standalone/internal/cache"
 	"github.com/ljinf/im_server_standalone/internal/model"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"time"
 )
@@ -103,11 +105,26 @@ func (r *userRepository) GetByID(ctx context.Context, userId int64) (*model.User
 }
 
 func (r *userRepository) GetAccountInfoByID(ctx context.Context, userId int64) (*model.AccountInfo, error) {
+
+	infoCache, err := cache.GetAccountInfoCache(r.rdb, userId)
+	if err != nil {
+		r.logger.Error(err.Error(), zap.Any("userId", userId))
+	}
+
+	if infoCache != nil {
+		return infoCache, nil
+	}
+
 	var info model.AccountInfo
 	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`gender`,r.`email`,r.`phone` " +
 		"FROM `user_info` u INNER JOIN `register` r ON u.`user_id`=r.`user_id` WHERE u.`user_id`=?"
 	if err := r.DB(ctx).Raw(querySql, userId).Scan(&info).Error; err != nil {
 		return nil, err
 	}
+
+	if err = cache.SetAccountInfoCache(r.rdb, &info); err != nil {
+		r.logger.Error(err.Error(), zap.Any("info", info))
+	}
+
 	return &info, nil
 }

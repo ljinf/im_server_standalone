@@ -15,7 +15,7 @@ data:
       driver: mysql
       dsn: root:123456@tcp(127.0.0.1:3306)/im_chat?charset=utf8mb4&parseTime=True&loc=Local
   redis:
-    addr: 192.168.1.102:6379
+    addr: 127.0.0.1:6379
     password: ""
     db: 0
     read_timeout: 0.2s
@@ -24,7 +24,7 @@ data:
 
 ws_server:
   max_buckets: 16
-  per_bucket_cap: 10000
+  per_bucket_cap: 1000
 
 log:
   log_level: debug

@@ -40,8 +40,8 @@ func NewHTTPServer(
 
 	s.Use(
 		middleware.CORSMiddleware(),
-		middleware.ResponseLogMiddleware(logger),
-		middleware.RequestLogMiddleware(logger),
+		//middleware.ResponseLogMiddleware(logger),
+		//middleware.RequestLogMiddleware(logger),
 		//middleware.SignMiddleware(log),
 	)
 	s.GET("/", func(ctx *gin.Context) {

@@ -34,8 +34,7 @@ CREATE TABLE `user_info`
     `self_signature`    varchar(255) DEFAULT NULL COMMENT '个性签名',
     `friend_allow_type` int(10) NOT NULL DEFAULT '1' COMMENT '加好友验证类型（Friend_AllowType） 1无需验证 2需要验证',
     `silent_flag`       int(10) NOT NULL DEFAULT '0' COMMENT '禁言标识 1禁言',
-    `user_type`         int(10) NOT NULL DEFAULT '1' COMMENT '用户类型 1普通用户 2客服 3机器人',
-    `del_flag`          int(20) NOT NULL DEFAULT '0' COMMENT '删除标识',
+    `status`            int(20) NOT NULL DEFAULT '1' COMMENT '用户状态  0:异常  1:正常',
     `created_at`        datetime     DEFAULT NULL,
     `updated_at`        datetime     DEFAULT NULL,
     `deleted_at`        datetime     DEFAULT NULL,
@@ -131,7 +130,7 @@ CREATE TABLE `conversation_list`
     `type`            int(11) NOT NULL DEFAULT '0' COMMENT '会话类型枚举，0单聊 1群聊',
     `member`          int(11) NOT NULL DEFAULT '0' COMMENT '与会话相关的用户数量',
     `avatar`          varchar(256) DEFAULT '' COMMENT '群组头像',
-    `announcement`    text         DEFAULT '' COMMENT '群公告',
+    `announcement`    text COMMENT '群公告',
     `recent_msg_time` DATE        NOT NULL COMMENT '此会话最新产生消息的时间',
     `created_at`      int(11) NOT NULL DEFAULT '0',
     PRIMARY KEY (`id`)

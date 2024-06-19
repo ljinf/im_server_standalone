@@ -85,6 +85,14 @@ func (r *relationshipService) GetApplyFriendshipList(ctx context.Context, userId
 
 func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req *v1.ApplyFriendshipRequest) error {
 	err := r.tm.Transaction(ctx, func(ctx context.Context) error {
+
+		// 修改申请状态
+		applyB := model.ApplyFriendshipList{
+			UserId:   req.TargetId,
+			TargetId: req.UserId,
+			Status:   req.Status,
+		}
+
 		applyA := model.ApplyFriendshipList{
 			UserId:   req.TargetId,
 			TargetId: req.UserId,
@@ -96,20 +104,13 @@ func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req
 			return v1.ErrInternalServerError
 		}
 
+		if err := r.repo.UpdateApplyFriendship(ctx, &applyB); err != nil {
+			r.logger.Error(err.Error(), zap.Any("req", applyB))
+			return v1.ErrInternalServerError
+		}
+
 		now := time.Now()
 		if applyA.Status == contants.ApplyFriendshipStatusApproved {
-
-			// 修改申请状态
-			applyB := model.ApplyFriendshipList{
-				UserId:   req.TargetId,
-				TargetId: req.UserId,
-				Status:   contants.ApplyFriendshipStatusApproved,
-			}
-
-			if err := r.repo.UpdateApplyFriendship(ctx, &applyB); err != nil {
-				r.logger.Error(err.Error(), zap.Any("req", applyB))
-				return v1.ErrInternalServerError
-			}
 
 			// 添加好友记录
 			applyInfo, err := r.repo.SelectApplyOne(ctx, req.TargetId, req.UserId)

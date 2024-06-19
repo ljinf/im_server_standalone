@@ -20,6 +20,7 @@ func NewHTTPServer(
 	jwt *jwt.JWT,
 	userHandler *handler.UserHandler,
 	wsHandler handler.WebSocketHandler,
+	relationHandler *handler.RelationshipHandler,
 ) *http.Server {
 	gin.SetMode(gin.DebugMode)
 	s := http.NewServer(
@@ -71,6 +72,21 @@ func NewHTTPServer(
 		strictAuthRouter := v1.Group("/").Use(middleware.StrictAuth(jwt, logger))
 		{
 			strictAuthRouter.PUT("/user", userHandler.UpdateProfile)
+		}
+
+		relationGroup := v1.Group("/relationship").Use(middleware.StrictAuth(jwt, logger))
+		{
+			//好友关系申请
+			relationGroup.GET("/apply/add", relationHandler.AddApplyFriendship)
+			relationGroup.GET("/apply/list", relationHandler.GetApplyFriendshipList)
+			relationGroup.PUT("/apply/edit", relationHandler.UpdateApplyFriendshipInfo)
+			relationGroup.DELETE("/apply/del", relationHandler.DelApplyFriendshipInfo)
+
+			//关系相关
+			relationGroup.GET("/relation/list", relationHandler.GetRelationshipList)
+			relationGroup.PUT("/relation/edit", relationHandler.UpdateRelationship)
+			relationGroup.DELETE("/relation/del", relationHandler.DelRelationship)
+			relationGroup.POST("/relation/add/follow", relationHandler.AddRelationshipFollow)
 		}
 	}
 

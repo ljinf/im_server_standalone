@@ -25,3 +25,23 @@ func GetUserIdFromCtx(ctx *gin.Context) int64 {
 	userInfo := v.(*jwt.MyCustomClaims)
 	return userInfo.UserId
 }
+
+type PageInfo struct {
+	PageNum  int `json:"page_num"`
+	PageSize int `json:"page_size"`
+}
+
+func GetPageInfo(ctx *gin.Context) *PageInfo {
+	var pageInfo PageInfo
+	_ = ctx.ShouldBind(&pageInfo)
+
+	if pageInfo.PageNum == 0 {
+		pageInfo.PageNum = 1
+	}
+
+	if pageInfo.PageSize == 0 {
+		pageInfo.PageSize = 30
+	}
+
+	return &pageInfo
+}

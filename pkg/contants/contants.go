@@ -2,9 +2,11 @@ package contants
 
 const (
 	//申请状态
-	ApplyFriendshipStatusPending  = 1 //申请中
-	ApplyFriendshipStatusApproved = 2 //通过
-	ApplyFriendshipStatusRejected = 3 //拒绝
+	ApplyFriendshipStatusApplying = 1 //申请中
+	ApplyFriendshipStatusPending  = 2 //待处理
+	ApplyFriendshipStatusApproved = 3 //通过
+	ApplyFriendshipStatusRejected = 4 //拒绝
+	ApplyFriendshipStatusExpired  = 5 //过期
 
 	//关系类型
 	RelationshipTypeFriend = 1 //好友关系

@@ -7,17 +7,20 @@ import (
 	"github.com/ljinf/im_server_standalone/pkg/contants"
 	"go.uber.org/zap"
 	"net/http"
+	"time"
 )
 
 type RelationshipHandler struct {
 	*Handler
-	srv service.RelationshipService
+	srv   service.RelationshipService
+	imSrv service.IMMessageService
 }
 
-func NewRelationshipHandler(h *Handler, srv service.RelationshipService) *RelationshipHandler {
+func NewRelationshipHandler(h *Handler, srv service.RelationshipService, imsvr service.IMMessageService) *RelationshipHandler {
 	return &RelationshipHandler{
 		Handler: h,
 		srv:     srv,
+		imSrv:   imsvr,
 	}
 }
 
@@ -73,6 +76,21 @@ func (h *RelationshipHandler) UpdateApplyFriendshipInfo(ctx *gin.Context) {
 	if err := h.srv.UpdateApplyFriendshipInfo(ctx, &param); err != nil {
 		v1.HandleError(ctx, http.StatusOK, err, nil)
 		return
+	}
+
+	if param.Status == contants.ApplyFriendshipStatusApproved {
+		msgReq := &v1.MsgReq{
+			UserId:      userId,
+			TargetId:    param.TargetId,
+			Content:     contants.ChatSayHello,
+			ContentType: contants.MsgContentTypeTxt,
+			SendTime:    time.Now().Unix(),
+			CreatedAt:   time.Now().Unix(),
+		}
+		_, err := h.imSrv.CreateMsg(ctx, msgReq)
+		if err != nil {
+			h.logger.Error(err.Error())
+		}
 	}
 
 	v1.HandleSuccess(ctx, nil)

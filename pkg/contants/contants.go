@@ -20,4 +20,10 @@ const (
 	MsgTypeNotify  = 1 //通知消息
 	MsgTypeCommand = 2 //指令消息
 	MsgTypeChat    = 3 //普通聊天消息
+
+	ChatSayHello = "从此我们是好友关系啦！"
+
+	MsgContentTypeTxt   = 1 //文字
+	MsgContentTypeImg   = 2 //语音
+	MsgContentTypeVideo = 3 //视频
 )

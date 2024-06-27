@@ -88,8 +88,8 @@ func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req
 
 		// 修改申请状态
 		applyB := model.ApplyFriendshipList{
-			UserId:   req.TargetId,
-			TargetId: req.UserId,
+			UserId:   req.UserId,
+			TargetId: req.TargetId,
 			Status:   req.Status,
 		}
 
@@ -110,7 +110,7 @@ func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req
 		}
 
 		now := time.Now()
-		if applyA.Status == contants.ApplyFriendshipStatusApproved {
+		if req.Status == contants.ApplyFriendshipStatusApproved {
 
 			// 添加好友记录
 			applyInfo, err := r.repo.SelectApplyOne(ctx, req.TargetId, req.UserId)

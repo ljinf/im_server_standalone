@@ -11,7 +11,7 @@ import (
 
 type IMMessageService interface {
 	CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgResp, error)
-	GetMsgList(ctx context.Context, userId, conversationId int64, pageNum, pageSize int) ([]model.MsgList, error)
+	GetMsgList(ctx context.Context, userId, conversationId int64, pageNum, pageSize int) ([]model.MsgResp, error)
 
 	GetConversationList(ctx context.Context, userId int64, pageNum, pageSize int) ([]model.ConversationList, int, error)
 	CreateConversationList(ctx context.Context, list ...*model.ConversationList) error
@@ -125,9 +125,13 @@ func (s *imMessageService) CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.M
 	return resp, nil
 }
 
-func (s *imMessageService) GetMsgList(ctx context.Context, userId, conversationId int64, pageNum, pageSize int) ([]model.MsgList, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *imMessageService) GetMsgList(ctx context.Context, userId, conversationId int64, pageNum, pageSize int) ([]model.MsgResp, error) {
+	msgLists, err := s.repo.SelectConversationMsg(ctx, conversationId, pageNum, pageSize)
+	if err != nil {
+		s.logger.Error(err.Error(), zap.Any("conversationId", conversationId))
+		return nil, v1.ErrInternalServerError
+	}
+	return msgLists, nil
 }
 
 func (s *imMessageService) GetConversationList(ctx context.Context, userId int64, pageNum, pageSize int) ([]model.ConversationList, int, error) {

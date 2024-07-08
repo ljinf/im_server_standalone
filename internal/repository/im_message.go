@@ -19,6 +19,7 @@ type IMMessageRepository interface {
 
 	// 会话消息
 	CreateConversationMsg(ctx context.Context, req *model.ConversationMsgList) error
+	SelectConversationMsg(ctx context.Context, conversationId int64, pageNum, pageSize int) ([]model.MsgResp, error)
 
 	// 用户消息链
 	CreateUserMsgList(ctx context.Context, req *model.UserMsgList) error
@@ -26,6 +27,7 @@ type IMMessageRepository interface {
 	// 用户会话链
 	CreateUserConversationList(ctx context.Context, req ...*model.UserConversationList) error
 	UpdateUserConversationList(ctx context.Context, req *model.UserConversationList) error
+	SelectUserConversationList(ctx context.Context, userId int64) ([]model.ConversationResp, error)
 }
 
 type imMessageRepository struct {
@@ -77,6 +79,15 @@ func (r *imMessageRepository) CreateConversationMsg(ctx context.Context, req *mo
 	return r.DB(ctx).Create(req).Error
 }
 
+func (r *imMessageRepository) SelectConversationMsg(ctx context.Context, conversationId int64, pageNum, pageSize int) ([]model.MsgResp, error) {
+	var list []model.MsgResp
+	querySql := "select ms.*,ml.seq from msg_list ms left join conversation_msg_list ml on ms.conversation_id=ml.conversation_id " +
+		"where ms.conversation_id=? " +
+		"order by ml.seq desc limit ? offset ?"
+	err := r.db.Raw(querySql, conversationId, pageSize, (pageNum-1)*pageSize).Scan(&list).Error
+	return list, err
+}
+
 func (r *imMessageRepository) CreateUserMsgList(ctx context.Context, req *model.UserMsgList) error {
 	return r.DB(ctx).Create(req).Error
 }
@@ -87,4 +98,12 @@ func (r *imMessageRepository) CreateUserConversationList(ctx context.Context, re
 
 func (r *imMessageRepository) UpdateUserConversationList(ctx context.Context, req *model.UserConversationList) error {
 	return r.DB(ctx).Where("user_id=? and conversation_id=?", req.UserId, req.ConversationId).Updates(req).Error
+}
+
+func (r *imMessageRepository) SelectUserConversationList(ctx context.Context, userId int64) ([]model.ConversationResp, error) {
+	var list []model.ConversationResp
+	querySql := "select ucl.user_id,ucl.last_read_seq,ucl.notify_type,ucl.is_top,cl.* " +
+		"from user_conversation_list ucl inner join conversation_list cl on ucl.conversation_id=cl.conversation_id where ucl.user_id=?"
+	err := r.db.Raw(querySql, userId).Scan(&list).Error
+	return list, err
 }

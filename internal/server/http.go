@@ -21,6 +21,7 @@ func NewHTTPServer(
 	userHandler *handler.UserHandler,
 	wsHandler handler.WebSocketHandler,
 	relationHandler *handler.RelationshipHandler,
+	chatHandler *handler.ChatHandler,
 ) *http.Server {
 	gin.SetMode(gin.DebugMode)
 	s := http.NewServer(
@@ -87,6 +88,13 @@ func NewHTTPServer(
 			relationGroup.PUT("/relation/edit", relationHandler.UpdateRelationship)
 			relationGroup.DELETE("/relation/del", relationHandler.DelRelationship)
 			relationGroup.POST("/relation/add/follow", relationHandler.AddRelationshipFollow)
+		}
+
+		chatGroup := v1.Group("/chat").Use(middleware.StrictAuth(jwt, logger))
+		{
+			chatGroup.POST("/send", chatHandler.SendChatMessage)
+			chatGroup.GET("/conversation/list", chatHandler.GetUserConversationList)
+			chatGroup.GET("/msg/list", chatHandler.GetUserMsgList)
 		}
 	}
 

@@ -12,7 +12,6 @@ type Register struct {
 	Phone     string         `json:"phone"`
 	Email     string         `json:"email"`
 	Password  string         `json:"password"`
-	Salt      string         `json:"salt"`
 	CreatedAt time.Time      `json:"-"`
 	UpdatedAt time.Time      `json:"-"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`

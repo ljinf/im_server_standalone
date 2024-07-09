@@ -13,10 +13,10 @@ import (
 type RelationshipHandler struct {
 	*Handler
 	srv   service.RelationshipService
-	imSrv service.IMMessageService
+	imSrv service.ChatService
 }
 
-func NewRelationshipHandler(h *Handler, srv service.RelationshipService, imsvr service.IMMessageService) *RelationshipHandler {
+func NewRelationshipHandler(h *Handler, srv service.RelationshipService, imsvr service.ChatService) *RelationshipHandler {
 	return &RelationshipHandler{
 		Handler: h,
 		srv:     srv,

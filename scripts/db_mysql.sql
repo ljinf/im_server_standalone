@@ -12,12 +12,12 @@ CREATE TABLE `register`
     `phone`      varchar(11) DEFAULT NULL COMMENT '手机号',
     `email`      varchar(64) DEFAULT NULL COMMENT '邮箱',
     `password`   varchar(64) DEFAULT NULL COMMENT '密码',
-    `salt`       varchar(64) DEFAULT NULL COMMENT '加密盐',
     `created_at` datetime    DEFAULT NULL,
     `updated_at` datetime    DEFAULT NULL,
     `deleted_at` datetime    DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `user` (`user_id`),
+    KEY          user_phone_email_pass(`user_id`,`phone`,`email`,`password`),
     KEY          `deleted_idx` (`deleted_at`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT '注册信息表';
 
@@ -40,6 +40,7 @@ CREATE TABLE `user_info`
     `deleted_at`        datetime     DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `user` (`user_id`),
+    KEY                 user_phone_email_pass(`user_id`,`nick_name`,`avatar`,`gender`),
     KEY                 `deleted_idx` (`deleted_at`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT '用户信息表';
 
@@ -107,7 +108,7 @@ CREATE TABLE `user_msg_list`
     `seq`             bigint(20) unsigned DEFAULT 0 COMMENT '消息在会话中的序列号，用于保证消息的顺序',
     `created_at`      int(11) NOT NULL DEFAULT '0',
     PRIMARY KEY (`id`),
-    KEY               `user_conversation_msg_seq_idx` (`user_id`,`conversation_id`,`msg_id`,`seq`)
+    KEY               `user_conversation_seq_msg_idx` (`user_id`,`conversation_id`,`seq`,`msg_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户消息链';
 
 DROP TABLE IF EXISTS `msg_list`;
@@ -134,7 +135,7 @@ CREATE TABLE `conversation_list`
     `member`          int(11) NOT NULL DEFAULT '0' COMMENT '与会话相关的用户数量',
     `avatar`          varchar(256) DEFAULT '' COMMENT '群组头像',
     `announcement`    text COMMENT '群公告',
-    `recent_msg_time` DATETIME        NOT NULL COMMENT '此会话最新产生消息的时间',
+    `recent_msg_time` DATETIME    NOT NULL COMMENT '此会话最新产生消息的时间',
     `created_at`      int(11) NOT NULL DEFAULT '0',
     PRIMARY KEY (`id`),
     KEY               conversation_idx(`conversation_id`)
@@ -149,7 +150,7 @@ CREATE TABLE `conversation_msg_list`
     `seq`             bigint(20) unsigned DEFAULT 0 COMMENT '消息在会话中的序列号，用于保证消息的顺序',
     `created_at`      int(11) NOT NULL DEFAULT '0',
     PRIMARY KEY (`id`),
-    KEY               conversation_msg_seq_idx(`conversation_id`,`msg_id`,`seq`)
+    KEY               conversation_seq_msg_idx(`conversation_id`,`seq`,`msg_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话消息链';
 
 

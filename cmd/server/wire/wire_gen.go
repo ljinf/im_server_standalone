@@ -40,8 +40,11 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger) (*app.App, func(), err
 	webSocketHandler := handler.NewWebSocketHandler(handlerHandler, websocketService)
 	relationshipRepository := repository.NewRelationshipRepository(repositoryRepository)
 	relationshipService := service.NewRelationshipService(serviceService, relationshipRepository)
-	relationshipHandler := handler.NewRelationshipHandler(handlerHandler, relationshipService)
-	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler, webSocketHandler, relationshipHandler)
+	chatRepository := repository.NewChatRepository(repositoryRepository)
+	chatService := service.NewChatService(serviceService, chatRepository)
+	relationshipHandler := handler.NewRelationshipHandler(handlerHandler, relationshipService, chatService)
+	chatHandler := handler.NewChatHandler(handlerHandler, chatService)
+	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler, webSocketHandler, relationshipHandler, chatHandler)
 	job := server.NewJob(logger)
 	appApp := newApp(httpServer, job)
 	return appApp, func() {
@@ -50,11 +53,11 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger) (*app.App, func(), err
 
 // wire.go:
 
-var repositorySet = wire.NewSet(repository.NewDB, repository.NewRedis, repository.NewRepository, repository.NewTransaction, repository.NewUserRepository, repository.NewRelationshipRepository)
+var repositorySet = wire.NewSet(repository.NewDB, repository.NewRedis, repository.NewRepository, repository.NewTransaction, repository.NewUserRepository, repository.NewRelationshipRepository, repository.NewChatRepository)
 
-var serviceSet = wire.NewSet(service.NewService, service.NewUserService, service.NewWebsocketService, service.NewRelationshipService)
+var serviceSet = wire.NewSet(service.NewService, service.NewUserService, service.NewWebsocketService, service.NewRelationshipService, service.NewChatService)
 
-var handlerSet = wire.NewSet(handler.NewHandler, handler.NewUserHandler, handler.NewWebSocketHandler, handler.NewRelationshipHandler)
+var handlerSet = wire.NewSet(handler.NewHandler, handler.NewUserHandler, handler.NewWebSocketHandler, handler.NewRelationshipHandler, handler.NewChatHandler)
 
 var serverSet = wire.NewSet(server.NewHTTPServer, server.NewJob, ws.NewWsServer)
 

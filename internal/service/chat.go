@@ -9,28 +9,28 @@ import (
 	"time"
 )
 
-type IMMessageService interface {
+type ChatService interface {
 	CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgResp, error)
-	GetMsgList(ctx context.Context, userId, conversationId int64, pageNum, pageSize int) ([]model.MsgResp, error)
+	GetMsgList(ctx context.Context, userId, conversationId, seq int64, pageNum, pageSize int) ([]v1.MsgResp, error)
 
-	GetConversationList(ctx context.Context, userId int64, pageNum, pageSize int) ([]model.ConversationList, int, error)
+	GetUserConversationList(ctx context.Context, userId int64) ([]v1.ConversationResp, error)
 	CreateConversationList(ctx context.Context, list ...*model.ConversationList) error
 }
 
-type imMessageService struct {
+type chatService struct {
 	*Service
-	repo repository.IMMessageRepository
+	repo repository.ChatRepository
 }
 
-func NewIMMessageService(s *Service, repo repository.IMMessageRepository) IMMessageService {
-	return &imMessageService{
+func NewChatService(s *Service, repo repository.ChatRepository) ChatService {
+	return &chatService{
 		Service: s,
 		repo:    repo,
 	}
 }
 
 // 返回消息ID
-func (s *imMessageService) CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgResp, error) {
+func (s *chatService) CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgResp, error) {
 
 	msgId, err := s.sid.GenUint64()
 	if err != nil {
@@ -125,21 +125,55 @@ func (s *imMessageService) CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.M
 	return resp, nil
 }
 
-func (s *imMessageService) GetMsgList(ctx context.Context, userId, conversationId int64, pageNum, pageSize int) ([]model.MsgResp, error) {
-	msgLists, err := s.repo.SelectConversationMsg(ctx, conversationId, pageNum, pageSize)
+func (s *chatService) GetMsgList(ctx context.Context, userId, conversationId, seq int64, pageNum, pageSize int) ([]v1.MsgResp, error) {
+	msgLists, err := s.repo.SelectConversationMsg(ctx, conversationId, seq, pageNum, pageSize)
 	if err != nil {
 		s.logger.Error(err.Error(), zap.Any("conversationId", conversationId))
 		return nil, v1.ErrInternalServerError
 	}
-	return msgLists, nil
+
+	resp := make([]v1.MsgResp, 0, len(msgLists))
+	for _, v := range msgLists {
+		resp = append(resp, v1.MsgResp{
+			UserId:         v.UserId,
+			MsgId:          v.MsgId,
+			ConversationId: v.ConversationId,
+			Content:        v.Content,
+			ContentType:    v.ContentType,
+			Status:         v.Status,
+			Seq:            v.Seq,
+			SendTime:       v.SendTime,
+		})
+	}
+	return resp, nil
 }
 
-func (s *imMessageService) GetConversationList(ctx context.Context, userId int64, pageNum, pageSize int) ([]model.ConversationList, int, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *chatService) GetUserConversationList(ctx context.Context, userId int64) ([]v1.ConversationResp, error) {
+	userConversationList, err := s.repo.SelectUserConversationList(ctx, userId)
+	if err != nil {
+		s.logger.Error(err.Error(), zap.Any("userId", userId))
+		return nil, v1.ErrInternalServerError
+	}
+
+	resp := make([]v1.ConversationResp, 0, len(userConversationList))
+	for _, v := range userConversationList {
+		resp = append(resp, v1.ConversationResp{
+			ConversationId: v.ConversationId,
+			Type:           v.Type,
+			Avatar:         v.Avatar,
+			RecentMsg: v1.MsgResp{
+				MsgId: v.MsgId,
+				Seq:   v.Seq,
+			}, //TODO
+			LastReadSeq: v.LastReadSeq,
+			NotifyType:  v.NotifyType,
+			IsTop:       v.IsTop,
+		})
+	}
+	return resp, nil
 }
 
-func (s *imMessageService) CreateConversationList(ctx context.Context, list ...*model.ConversationList) error {
+func (s *chatService) CreateConversationList(ctx context.Context, list ...*model.ConversationList) error {
 
 	//TODO implement me
 	panic("implement me")

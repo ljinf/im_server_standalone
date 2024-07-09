@@ -43,7 +43,6 @@ func (r *userRepository) CreateRegister(ctx context.Context, req *model.AccountI
 			Phone:     req.Phone,
 			Email:     req.Email,
 			Password:  req.Password,
-			Salt:      req.Salt,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}

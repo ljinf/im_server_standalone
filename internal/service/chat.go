@@ -182,6 +182,13 @@ func (s *chatService) CreateConversationList(ctx context.Context, list ...*model
 }
 
 func (s *chatService) ReportReadMsgSeq(ctx context.Context, req *v1.ReportReadReq) error {
-	//TODO implement me
-	panic("implement me")
+	now := time.Now().Unix()
+	uc := model.UserConversationList{
+		UserId:         req.UserId,
+		ConversationId: req.ConversationId,
+		LastReadSeq:    req.Seq,
+		UpdatedAt:      now,
+	}
+
+	return s.repo.UpdateUserConversationList(ctx, &uc)
 }

@@ -94,7 +94,7 @@ func NewHTTPServer(
 		{
 			chatGroup.POST("/send", chatHandler.SendChatMessage)
 			chatGroup.GET("/conversation/list", chatHandler.GetUserConversationList)
-			chatGroup.POST("/msg/list", chatHandler.GetUserMsgList)
+			chatGroup.POST("/msg/history/list", chatHandler.GetUserMsgList)
 			chatGroup.POST("/report/msg/read", chatHandler.ReportReadMsgSeq)
 		}
 	}

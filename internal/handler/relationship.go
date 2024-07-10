@@ -79,7 +79,7 @@ func (h *RelationshipHandler) UpdateApplyFriendshipInfo(ctx *gin.Context) {
 	}
 
 	if param.Status == contants.ApplyFriendshipStatusApproved {
-		msgReq := &v1.MsgReq{
+		msgReq := &v1.SendMsgReq{
 			UserId:      userId,
 			TargetId:    param.TargetId,
 			Content:     contants.ChatSayHello,

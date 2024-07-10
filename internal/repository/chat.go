@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/ljinf/im_server_standalone/internal/cache"
 	"github.com/ljinf/im_server_standalone/internal/model"
+	"gorm.io/gorm/clause"
 )
 
 type ChatRepository interface {
@@ -93,7 +94,9 @@ func (r *chatRepository) CreateUserMsgList(ctx context.Context, req *model.UserM
 }
 
 func (r *chatRepository) CreateUserConversationList(ctx context.Context, req ...*model.UserConversationList) error {
-	return r.DB(ctx).Create(req).Error
+	return r.DB(ctx).Clauses(clause.OnConflict{
+		DoUpdates: clause.AssignmentColumns([]string{"last_read_seq", "updated_at"}),
+	}).Create(req).Error
 }
 
 func (r *chatRepository) UpdateUserConversationList(ctx context.Context, req *model.UserConversationList) error {

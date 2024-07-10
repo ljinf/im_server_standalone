@@ -10,11 +10,12 @@ import (
 )
 
 type ChatService interface {
-	CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgResp, error)
-	GetMsgList(ctx context.Context, userId, conversationId, seq int64, pageNum, pageSize int) ([]v1.MsgResp, error)
+	CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.SendMsgResp, error)
+	GetMsgList(ctx context.Context, userId, conversationId, seq int64, pageNum, pageSize int) ([]v1.SendMsgResp, error)
 
 	GetUserConversationList(ctx context.Context, userId int64) ([]v1.ConversationResp, error)
 	CreateConversationList(ctx context.Context, list ...*model.ConversationList) error
+	ReportReadMsgSeq(ctx context.Context, req *v1.ReportReadReq) error
 }
 
 type chatService struct {
@@ -30,7 +31,7 @@ func NewChatService(s *Service, repo repository.ChatRepository) ChatService {
 }
 
 // 返回消息ID
-func (s *chatService) CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgResp, error) {
+func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.SendMsgResp, error) {
 
 	msgId, err := s.sid.GenUint64()
 	if err != nil {
@@ -45,7 +46,7 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgRes
 		Content:        req.Content,
 		ContentType:    req.ContentType,
 		Status:         0,
-		SendTime:       req.SendTime,
+		SendTime:       now,
 		CreatedAt:      now,
 	}
 
@@ -54,6 +55,8 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgRes
 
 	if err = s.tm.Transaction(ctx, func(ctx context.Context) error {
 
+		// 用户会话链
+		userConversationList := make([]*model.UserConversationList, 0, 2)
 		//会话不存在
 		if msg.ConversationId == 0 {
 			cId, err := s.sid.GenUint64()
@@ -72,6 +75,13 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgRes
 				return err
 			}
 			msg.ConversationId = conversationInfo.ConversationId
+			// 接收者的会话
+			userConversationList = append(userConversationList, &model.UserConversationList{
+				UserId:         req.TargetId,
+				ConversationId: msg.ConversationId,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			})
 		}
 
 		//会话消息
@@ -84,23 +94,15 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgRes
 			return err
 		}
 
-		// 用户会话链
-		ucl := []*model.UserConversationList{
-			{
-				UserId:         req.UserId,
-				ConversationId: msg.ConversationId,
-				LastReadSeq:    cMsg.Seq,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			},
-			{
-				UserId:         req.TargetId,
-				ConversationId: msg.ConversationId,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			},
-		}
-		if err = s.repo.CreateUserConversationList(ctx, ucl...); err != nil {
+		// 发送者的会话链
+		userConversationList = append(userConversationList, &model.UserConversationList{
+			UserId:         req.UserId,
+			ConversationId: msg.ConversationId,
+			LastReadSeq:    cMsg.Seq,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		})
+		if err = s.repo.CreateUserConversationList(ctx, userConversationList...); err != nil {
 			return err
 		}
 		mSeq = cMsg.Seq
@@ -111,7 +113,7 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgRes
 		return nil, err
 	}
 
-	resp := &v1.MsgResp{
+	resp := &v1.SendMsgResp{
 		UserId:         msg.UserId,
 		MsgId:          int64(msgId),
 		ConversationId: msg.ConversationId,
@@ -125,16 +127,16 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.MsgReq) (*v1.MsgRes
 	return resp, nil
 }
 
-func (s *chatService) GetMsgList(ctx context.Context, userId, conversationId, seq int64, pageNum, pageSize int) ([]v1.MsgResp, error) {
+func (s *chatService) GetMsgList(ctx context.Context, userId, conversationId, seq int64, pageNum, pageSize int) ([]v1.SendMsgResp, error) {
 	msgLists, err := s.repo.SelectConversationMsg(ctx, conversationId, seq, pageNum, pageSize)
 	if err != nil {
 		s.logger.Error(err.Error(), zap.Any("conversationId", conversationId))
 		return nil, v1.ErrInternalServerError
 	}
 
-	resp := make([]v1.MsgResp, 0, len(msgLists))
+	resp := make([]v1.SendMsgResp, 0, len(msgLists))
 	for _, v := range msgLists {
-		resp = append(resp, v1.MsgResp{
+		resp = append(resp, v1.SendMsgResp{
 			UserId:         v.UserId,
 			MsgId:          v.MsgId,
 			ConversationId: v.ConversationId,
@@ -161,7 +163,7 @@ func (s *chatService) GetUserConversationList(ctx context.Context, userId int64)
 			ConversationId: v.ConversationId,
 			Type:           v.Type,
 			Avatar:         v.Avatar,
-			RecentMsg: v1.MsgResp{
+			RecentMsg: v1.SendMsgResp{
 				MsgId: v.MsgId,
 				Seq:   v.Seq,
 			}, //TODO
@@ -175,6 +177,11 @@ func (s *chatService) GetUserConversationList(ctx context.Context, userId int64)
 
 func (s *chatService) CreateConversationList(ctx context.Context, list ...*model.ConversationList) error {
 
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *chatService) ReportReadMsgSeq(ctx context.Context, req *v1.ReportReadReq) error {
 	//TODO implement me
 	panic("implement me")
 }

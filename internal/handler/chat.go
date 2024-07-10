@@ -11,13 +11,15 @@ import (
 
 type ChatHandler struct {
 	*Handler
-	srv service.ChatService
+	srv       service.ChatService
+	socketSrv service.WebsocketService
 }
 
-func NewChatHandler(h *Handler, srv service.ChatService) *ChatHandler {
+func NewChatHandler(h *Handler, srv service.ChatService, socket service.WebsocketService) *ChatHandler {
 	return &ChatHandler{
-		Handler: h,
-		srv:     srv,
+		Handler:   h,
+		srv:       srv,
+		socketSrv: socket,
 	}
 }
 
@@ -36,6 +38,10 @@ func (h *ChatHandler) SendChatMessage(ctx *gin.Context) {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrInternalServerError, nil)
 		return
 	}
+
+	// 转发给target
+	h.socketSrv.SyncPushMsg(msgResp, params.TargetId)
+
 	v1.HandleSuccess(ctx, msgResp)
 }
 

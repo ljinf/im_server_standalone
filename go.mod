@@ -9,6 +9,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/wire v0.6.0
 	github.com/gorilla/websocket v1.5.3
+	github.com/panjf2000/ants v1.3.0
 	github.com/redis/go-redis/v9 v9.5.3
 	github.com/sony/sonyflake v1.2.0
 	github.com/spf13/viper v1.19.0

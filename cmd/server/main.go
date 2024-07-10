@@ -8,6 +8,7 @@ import (
 	"github.com/ljinf/im_server_standalone/cmd/server/wire"
 	"github.com/ljinf/im_server_standalone/pkg/config"
 	"github.com/ljinf/im_server_standalone/pkg/log"
+	"github.com/panjf2000/ants"
 	"go.uber.org/zap"
 )
 
@@ -33,7 +34,10 @@ func main() {
 
 	logger := log.NewLog(conf)
 
-	app, cleanup, err := wire.NewWire(conf, logger)
+	taskPool, _ := ants.NewPool(256)
+	defer taskPool.Release()
+
+	app, cleanup, err := wire.NewWire(conf, logger, taskPool)
 	defer cleanup()
 	if err != nil {
 		panic(err)

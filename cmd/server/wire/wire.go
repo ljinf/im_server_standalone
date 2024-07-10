@@ -15,6 +15,7 @@ import (
 	"github.com/ljinf/im_server_standalone/pkg/log"
 	"github.com/ljinf/im_server_standalone/pkg/server/http"
 	"github.com/ljinf/im_server_standalone/pkg/sid"
+	"github.com/panjf2000/ants"
 	"github.com/spf13/viper"
 )
 
@@ -62,7 +63,7 @@ func newApp(
 	)
 }
 
-func NewWire(*viper.Viper, *log.Logger) (*app.App, func(), error) {
+func NewWire(*viper.Viper, *log.Logger, *ants.Pool) (*app.App, func(), error) {
 	panic(wire.Build(
 		repositorySet,
 		serviceSet,

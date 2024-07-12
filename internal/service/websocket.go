@@ -1,8 +1,10 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/gorilla/websocket"
+	v1 "github.com/ljinf/im_server_standalone/api/v1"
 	"github.com/ljinf/im_server_standalone/internal/model"
 	"github.com/ljinf/im_server_standalone/internal/ws"
 	"github.com/ljinf/im_server_standalone/pkg/contants"
@@ -20,13 +22,15 @@ type WebsocketService interface {
 type websocketService struct {
 	*Service
 	ws.SocketWsServer
-	task *ants.Pool
+	chatSrv ChatService
+	task    *ants.Pool
 }
 
-func NewWebsocketService(s *Service, wss ws.SocketWsServer, pool *ants.Pool) WebsocketService {
+func NewWebsocketService(s *Service, wss ws.SocketWsServer, chatSrv ChatService, pool *ants.Pool) WebsocketService {
 	return &websocketService{
 		Service:        s,
 		SocketWsServer: wss,
+		chatSrv:        chatSrv,
 		task:           pool,
 	}
 }
@@ -79,7 +83,36 @@ func (w *websocketService) ProcessMsg(sender int64, payload []byte) {
 
 		break
 	case contants.MsgTypeChat:
-
+		w.msgChat(info.Payload)
 		break
 	}
+}
+
+func (w *websocketService) msgChat(payload []byte) {
+	msgReq, err := parsePayload(payload)
+	if err != nil {
+		w.logger.Error(err.Error(), zap.Any("msgChat", "parsePayload err"))
+		return
+	}
+
+	msgResp, err := w.chatSrv.CreateMsg(context.Background(), msgReq)
+	if err != nil {
+		w.logger.Error(err.Error(), zap.Any("msgChat", "CreateMsg err"))
+	}
+
+	resp, err := json.Marshal(msgResp)
+	if err != nil {
+		w.logger.Error(err.Error(), zap.Any("msgChat", "json.Marshal err"))
+		return
+	}
+
+	w.PushMsg(resp, msgResp.UserId, msgReq.TargetId)
+}
+
+func parsePayload(payload []byte) (*v1.SendMsgReq, error) {
+	msg := &v1.SendMsgReq{}
+	if err := json.Unmarshal(payload, msg); err != nil {
+		return nil, err
+	}
+	return msg, nil
 }

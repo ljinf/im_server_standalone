@@ -109,6 +109,7 @@ type MsgResp struct {
 type ConversationResp struct {
 	ConversationList
 	MsgId       int64 `json:"msg_id"`        //最新消息ID
+	SendId      int64 `json:"send_id"`       //最新消息的UserID
 	Seq         int64 `json:"seq"`           //最新消息的序列号
 	LastReadSeq int64 `json:"last_read_seq"` //此会话用户已读的最后一条消息
 	NotifyType  int   `json:"notify_type"`   //会话收到消息的提醒类型，0未屏蔽，正常提醒 1屏蔽 2强提醒

@@ -14,6 +14,7 @@ type ChatService interface {
 	GetMsgList(ctx context.Context, userId, conversationId, seq int64, pageNum, pageSize int) ([]v1.SendMsgResp, error)
 
 	GetUserConversationList(ctx context.Context, userId int64) ([]v1.ConversationResp, error)
+	GetConversationUsers(ctx context.Context, conversationId int64) ([]v1.GetProfileResponseData, error) //会话下的用户
 	CreateConversationList(ctx context.Context, list ...*model.ConversationList) error
 	ReportReadMsgSeq(ctx context.Context, req *v1.ReportReadReq) error
 }
@@ -163,13 +164,14 @@ func (s *chatService) GetUserConversationList(ctx context.Context, userId int64)
 			ConversationId: v.ConversationId,
 			Type:           v.Type,
 			Avatar:         v.Avatar,
+			LastReadSeq:    v.LastReadSeq,
+			NotifyType:     v.NotifyType,
+			IsTop:          v.IsTop,
 			RecentMsg: v1.SendMsgResp{
+				//UserId: 0,
 				MsgId: v.MsgId,
 				Seq:   v.Seq,
-			}, //TODO
-			LastReadSeq: v.LastReadSeq,
-			NotifyType:  v.NotifyType,
-			IsTop:       v.IsTop,
+			}, //TODO  获取聊天消息
 		})
 	}
 	return resp, nil
@@ -191,4 +193,24 @@ func (s *chatService) ReportReadMsgSeq(ctx context.Context, req *v1.ReportReadRe
 	}
 
 	return s.repo.UpdateUserConversationList(ctx, &uc)
+}
+
+func (s *chatService) GetConversationUsers(ctx context.Context, conversationId int64) ([]v1.GetProfileResponseData, error) {
+	users, err := s.repo.SelectConversationUsers(ctx, conversationId)
+	if err != nil {
+		s.logger.Error(err.Error())
+	}
+
+	resp := make([]v1.GetProfileResponseData, 0, len(users))
+
+	for _, v := range users {
+		user := v1.GetProfileResponseData{
+			UserId:   v.UserId,
+			Avatar:   v.Avatar,
+			NickName: v.NickName,
+		}
+		resp = append(resp, user)
+	}
+
+	return resp, nil
 }

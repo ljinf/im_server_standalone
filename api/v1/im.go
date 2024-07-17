@@ -22,13 +22,15 @@ type SendMsgResp struct {
 }
 
 type ConversationResp struct {
-	ConversationId int64       `json:"conversation_id"` //会话ID
-	Type           int         `json:"type"`            //会话类型枚举，0单聊 1群聊
-	Avatar         string      `json:"avatar"`          //会话头像
-	RecentMsg      SendMsgResp `json:"recent_msg"`      //此会话最新产生的消息
-	LastReadSeq    int64       `json:"last_read_seq"`   //此会话用户已读的最后一条消息
-	NotifyType     int         `json:"notify_type"`     //会话收到消息的提醒类型，0未屏蔽，正常提醒 1屏蔽 2强提醒
-	IsTop          int         `json:"is_top"`          //会话是否被置顶展示
+	ConversationId int64  `json:"conversation_id"` //会话ID
+	Type           int    `json:"type"`            //会话类型枚举，0单聊 1群聊
+	Avatar         string `json:"avatar"`          //会话头像
+	LastReadSeq    int64  `json:"last_read_seq"`   //此会话用户已读的最后一条消息
+	NotifyType     int    `json:"notify_type"`     //会话收到消息的提醒类型，0未屏蔽，正常提醒 1屏蔽 2强提醒
+	IsTop          int    `json:"is_top"`          //会话是否被置顶展示
+
+	RecentMsg SendMsgResp              `json:"recent_msg"` //此会话最新产生的消息
+	UserList  []GetProfileResponseData `json:"user_list"`  //此会话的用户列表
 }
 
 type HistoryMsgListReq struct {

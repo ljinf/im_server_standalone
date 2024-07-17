@@ -28,7 +28,9 @@ type ChatRepository interface {
 	// 用户会话链
 	CreateUserConversationList(ctx context.Context, req ...*model.UserConversationList) error
 	UpdateUserConversationList(ctx context.Context, req *model.UserConversationList) error
+	// 用户会话列表
 	SelectUserConversationList(ctx context.Context, userId int64) ([]model.ConversationResp, error)
+	SelectConversationUsers(ctx context.Context, conversationId int64) ([]model.UserInfo, error) //会话下的用户列表
 }
 
 type chatRepository struct {
@@ -110,5 +112,15 @@ func (r *chatRepository) SelectUserConversationList(ctx context.Context, userId 
 		"LEFT JOIN `conversation_msg_list` cml ON ucl.`conversation_id`=cml.`conversation_id` " +
 		"WHERE ucl.`user_id`=?"
 	err := r.DB(ctx).Raw(querySql, userId).Scan(&list).Error
+	return list, err
+}
+
+// 会话下的所有用户
+func (r *chatRepository) SelectConversationUsers(ctx context.Context, conversationId int64) ([]model.UserInfo, error) {
+	querySql := "ELECT u.`user_id`,u.`avatar`,u.`nick_name` " +
+		"FROM `user_info` u INNER JOIN `user_conversation_list` uc ON u.`user_id`=uc.`user_id` " +
+		"WHERE uc.`conversation_id`=?"
+	list := []model.UserInfo{}
+	err := r.DB(ctx).Raw(querySql, conversationId).Find(&list).Error
 	return list, err
 }

@@ -119,6 +119,7 @@ CREATE TABLE `msg_list`
     `msg_id`          bigint(20) unsigned NOT NULL COMMENT '消息ID',
     `conversation_id` varchar(64) NOT NULL COMMENT '会话ID',
     `content`         text        NOT NULL COMMENT '消息文本',
+    `content_type`    int(8) NOT NULL DEFAULT '1' COMMENT '内容类型  1文本  2图片 3音频文件  4音频文件  5实时语音  6实时视频',
     `status`          int(11) NOT NULL DEFAULT '0' COMMENT '消息状态枚举，0可见 1屏蔽 2撤回',
     `send_time`       DATETIME    NOT NULL COMMENT '发送时间',
     `created_at`      int(11) NOT NULL DEFAULT '0',

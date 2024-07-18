@@ -16,6 +16,8 @@ type ChatService interface {
 	GetUserConversationList(ctx context.Context, userId int64) ([]v1.ConversationResp, error)
 	GetConversationUsers(ctx context.Context, conversationId int64) ([]v1.GetProfileResponseData, error) //会话下的用户
 	CreateConversationList(ctx context.Context, list ...*model.ConversationList) error
+	GetLastConversationMsg(ctx context.Context, conversationId int64) v1.SendMsgResp
+
 	ReportReadMsgSeq(ctx context.Context, req *v1.ReportReadReq) error
 }
 
@@ -167,11 +169,7 @@ func (s *chatService) GetUserConversationList(ctx context.Context, userId int64)
 			LastReadSeq:    v.LastReadSeq,
 			NotifyType:     v.NotifyType,
 			IsTop:          v.IsTop,
-			RecentMsg: v1.SendMsgResp{
-				//UserId: 0,
-				MsgId: v.MsgId,
-				Seq:   v.Seq,
-			}, //TODO  获取聊天消息
+			RecentMsg:      s.GetLastConversationMsg(ctx, v.ConversationId),
 		})
 	}
 	return resp, nil
@@ -213,4 +211,21 @@ func (s *chatService) GetConversationUsers(ctx context.Context, conversationId i
 	}
 
 	return resp, nil
+}
+
+func (s *chatService) GetLastConversationMsg(ctx context.Context, conversationId int64) v1.SendMsgResp {
+	lastMsg, err := s.repo.SelectLastConversationMsg(ctx, conversationId)
+	if err != nil {
+		s.logger.Error(err.Error(), zap.Any("convId", conversationId))
+	}
+	return v1.SendMsgResp{
+		ConversationId: lastMsg.ConversationId,
+		MsgId:          lastMsg.MsgId,
+		UserId:         lastMsg.MsgId,
+		Seq:            lastMsg.Seq,
+		Content:        lastMsg.Content,
+		ContentType:    lastMsg.ContentType,
+		Status:         lastMsg.Status,
+		SendTime:       lastMsg.SendTime,
+	}
 }

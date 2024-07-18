@@ -21,6 +21,7 @@ type ChatRepository interface {
 	// 会话消息
 	CreateConversationMsg(ctx context.Context, req *model.ConversationMsgList) error
 	SelectConversationMsg(ctx context.Context, conversationId, seq int64, pageNum, pageSize int) ([]model.MsgResp, error)
+	SelectLastConversationMsg(ctx context.Context, conversationId int64) (*model.MsgResp, error)
 
 	// 用户消息链
 	CreateUserMsgList(ctx context.Context, req *model.UserMsgList) error
@@ -123,4 +124,16 @@ func (r *chatRepository) SelectConversationUsers(ctx context.Context, conversati
 	list := []model.UserInfo{}
 	err := r.DB(ctx).Raw(querySql, conversationId).Find(&list).Error
 	return list, err
+}
+
+// 会话最新一条消息
+func (r *chatRepository) SelectLastConversationMsg(ctx context.Context, conversationId int64) (*model.MsgResp, error) {
+	var msg model.MsgResp
+
+	querySql := "SELECT cm.`conversation_id`,cm.`msg_id`,cm.`seq`,m.`user_id`,m.`content`,m.`content_type`,m.`send_time`,m.`status` FROM `conversation_msg_list` cm " +
+		"left join `msg_list` m on m.`msg_id`=cm.`msg_id` " +
+		"WHERE cm.`conversation_id` =? ORDER BY cm.`seq` DESC LIMIT 1"
+
+	err := r.DB(ctx).Raw(querySql, conversationId).Scan(&msg).Error
+	return &msg, err
 }

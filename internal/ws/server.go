@@ -16,6 +16,7 @@ var (
 
 type SocketWsServer interface {
 	AddConn(c *WsConn) error
+	GetConnManager() *ConnMgr
 	Push(msg []byte, ids ...int64) error
 }
 
@@ -37,6 +38,10 @@ func NewWsServer(conf *viper.Viper, logger *log.Logger) SocketWsServer {
 		return server
 	}
 	return server
+}
+
+func (s *wsServer) GetConnManager() *ConnMgr {
+	return s.connMgr
 }
 
 func (s *wsServer) AddConn(c *WsConn) error {

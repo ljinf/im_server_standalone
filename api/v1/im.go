@@ -1,12 +1,12 @@
 package v1
 
 type SendMsgReq struct {
-	ConversationId int64  `json:"conversation_id"` //会话ID
-	UserId         int64  `json:"user_id"`         //发送者ID
-	TargetId       int64  `json:"target_id"`       //接收者ID
-	Content        string `json:"content"`         //消息文本
-	ContentType    int    `json:"content_type"`    //内容类型
-	SendTime       int64  `json:"send_time"`       //发送时间
+	ConversationId int64  `json:"conversation_id" binding:"required" example:"123456"` //会话ID
+	UserId         int64  `json:"user_id"`                                             //发送者ID
+	TargetId       int64  `json:"target_id" binding:"required" example:"123456"`       //接收者ID
+	Content        string `json:"content" binding:"required"`                          //消息文本
+	ContentType    int    `json:"content_type" binding:"required"`                     //内容类型
+	SendTime       int64  `json:"send_time"`                                           //发送时间
 }
 
 type SendMsgResp struct {
@@ -34,15 +34,15 @@ type ConversationResp struct {
 }
 
 type HistoryMsgListReq struct {
-	UserId         int64 `json:"user_id"`         //用户ID
-	ConversationId int64 `json:"conversation_id"` //会话ID
-	Seq            int64 `json:"seq"`             //消息序列号
+	UserId         int64 `json:"user_id"`                                             //用户ID
+	ConversationId int64 `json:"conversation_id" binding:"required" example:"123456"` //会话ID
+	Seq            int64 `json:"seq"`                                                 //消息序列号
 	PageNum        int   `json:"page_num"`
 	PageSize       int   `json:"page_size"`
 }
 
 type ReportReadReq struct {
-	UserId         int64 `json:"user_id"`         //用户ID
-	ConversationId int64 `json:"conversation_id"` //会话ID
-	Seq            int64 `json:"seq"`             //消息序列号
+	UserId         int64 `json:"user_id"`                                             //用户ID
+	ConversationId int64 `json:"conversation_id" binding:"required" example:"123456"` //会话ID
+	Seq            int64 `json:"seq"`                                                 //消息序列号
 }

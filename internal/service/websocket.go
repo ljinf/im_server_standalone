@@ -36,7 +36,7 @@ func NewWebsocketService(s *Service, wss ws.SocketWsServer, chatSrv ChatService,
 }
 
 func (w *websocketService) InitConn(userId int64, conn *websocket.Conn) {
-	wsConn := ws.NewWsConn(w.logger, userId, conn)
+	wsConn := ws.NewWsConn(w.logger, w.GetConnManager(), userId, conn)
 	if err := w.AddConn(wsConn); err != nil {
 		w.logger.Error(err.Error(), zap.Any("userId", userId))
 		wsConn.Close()

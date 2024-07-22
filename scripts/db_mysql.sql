@@ -121,7 +121,7 @@ CREATE TABLE `msg_list`
     `content`         text        NOT NULL COMMENT '消息文本',
     `content_type`    int(8) NOT NULL DEFAULT '1' COMMENT '内容类型  1文本  2图片 3音频文件  4音频文件  5实时语音  6实时视频',
     `status`          int(11) NOT NULL DEFAULT '0' COMMENT '消息状态枚举，0可见 1屏蔽 2撤回',
-    `send_time`       DATETIME    NOT NULL COMMENT '发送时间',
+    `send_time`       int(11) NOT NULL DEFAULT '0' COMMENT '发送时间',
     `created_at`      int(11) NOT NULL DEFAULT '0',
     PRIMARY KEY (`id`),
     KEY               `msg_idx` (`msg_id`)
@@ -136,7 +136,7 @@ CREATE TABLE `conversation_list`
     `member`          int(11) NOT NULL DEFAULT '0' COMMENT '与会话相关的用户数量',
     `avatar`          varchar(256) DEFAULT '' COMMENT '群组头像',
     `announcement`    text COMMENT '群公告',
-    `recent_msg_time` DATETIME    NOT NULL COMMENT '此会话最新产生消息的时间',
+    `recent_msg_time` int(11) NOT NULL DEFAULT '0' COMMENT '此会话最新产生消息的时间',
     `created_at`      int(11) NOT NULL DEFAULT '0',
     PRIMARY KEY (`id`),
     KEY               conversation_idx(`conversation_id`)

@@ -33,6 +33,7 @@ func (h *RelationshipHandler) AddApplyFriendship(ctx *gin.Context) {
 		return
 	}
 
+	param.UserId = GetUserIdFromCtx(ctx)
 	if err := h.srv.AddApplyFriendship(ctx, &param); err != nil {
 		v1.HandleError(ctx, http.StatusOK, err, nil)
 		return
@@ -85,7 +86,6 @@ func (h *RelationshipHandler) UpdateApplyFriendshipInfo(ctx *gin.Context) {
 			Content:     contants.ChatSayHello,
 			ContentType: contants.MsgContentTypeTxt,
 			SendTime:    time.Now().Unix(),
-			CreatedAt:   time.Now().Unix(),
 		}
 		_, err := h.imSrv.CreateMsg(ctx, msgReq)
 		if err != nil {

@@ -53,7 +53,7 @@ func NewHTTPServer(
 		})
 	})
 
-	s.GET("/ws", wsHandler.AcceptConn)
+	s.GET("/ws", middleware.StrictAuth(jwt, logger), wsHandler.AcceptConn)
 
 	v1 := s.Group("/v1")
 	{
@@ -78,16 +78,16 @@ func NewHTTPServer(
 		relationGroup := v1.Group("/relationship").Use(middleware.StrictAuth(jwt, logger))
 		{
 			//好友关系申请
-			relationGroup.GET("/apply/add", relationHandler.AddApplyFriendship)
+			relationGroup.POST("/apply/add", relationHandler.AddApplyFriendship)
 			relationGroup.GET("/apply/list", relationHandler.GetApplyFriendshipList)
 			relationGroup.PUT("/apply/edit", relationHandler.UpdateApplyFriendshipInfo)
 			relationGroup.DELETE("/apply/del", relationHandler.DelApplyFriendshipInfo)
 
 			//关系相关
-			relationGroup.GET("/relation/list", relationHandler.GetRelationshipList)
+			relationGroup.POST("/relation/list", relationHandler.GetRelationshipList)
 			relationGroup.PUT("/relation/edit", relationHandler.UpdateRelationship)
 			relationGroup.DELETE("/relation/del", relationHandler.DelRelationship)
-			relationGroup.POST("/relation/add/follow", relationHandler.AddRelationshipFollow)
+			relationGroup.POST("/relation/add/follow", relationHandler.AddRelationshipFollow) // 添加关注
 		}
 
 		chatGroup := v1.Group("/chat").Use(middleware.StrictAuth(jwt, logger))

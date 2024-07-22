@@ -71,14 +71,14 @@ func (r *relationshipService) AddApplyFriendship(ctx context.Context, req *v1.Ap
 }
 
 func (r *relationshipService) GetApplyFriendshipList(ctx context.Context, userId int64, page int, pageSize int) (interface{}, error) {
-	list, total, err := r.repo.SelectRelationshipList(ctx, userId, contants.RelationshipTypeFriend, page, pageSize)
+	list, err := r.repo.SelectApplyFriendshipList(ctx, userId, page, pageSize)
 	if err != nil {
 		r.logger.Error(err.Error(), zap.Any("userId", userId))
 		return nil, v1.ErrInternalServerError
 	}
 	resp := map[string]interface{}{
 		"rows":  list,
-		"total": total,
+		"total": 0,
 	}
 	return resp, nil
 }

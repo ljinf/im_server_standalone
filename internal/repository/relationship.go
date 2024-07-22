@@ -48,7 +48,7 @@ func (r *relationshipRepository) CreateApplyFriendship(ctx context.Context, info
 }
 
 func (r *relationshipRepository) UpdateApplyFriendship(ctx context.Context, info *model.ApplyFriendshipList) error {
-	return r.DB(ctx).Where("user_id=? and target_id=?", info.UserId, info.TargetId).Updates(
+	return r.DB(ctx).Table(info.TableName()).Where("user_id=? and target_id=?", info.UserId, info.TargetId).Updates(
 		map[string]interface{}{"status": info.Status, "updated_at": time.Now()}).Error
 }
 

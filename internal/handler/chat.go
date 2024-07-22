@@ -25,13 +25,20 @@ func NewChatHandler(h *Handler, srv service.ChatService, socket service.Websocke
 
 // 发送信息
 func (h *ChatHandler) SendChatMessage(ctx *gin.Context) {
+
+	userId := GetUserIdFromCtx(ctx)
+	if userId == 0 {
+		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
+		return
+	}
+
 	var params v1.SendMsgReq
 	if err := ctx.ShouldBind(&params); err != nil {
 		h.logger.Error(err.Error())
 		v1.HandleError(ctx, http.StatusOK, v1.ErrBadRequest, nil)
 		return
 	}
-
+	params.UserId = userId
 	msgResp, err := h.srv.CreateMsg(ctx, &params)
 	if err != nil {
 		h.logger.Error(err.Error(), zap.Any("param", params))
@@ -65,6 +72,13 @@ func (h *ChatHandler) GetUserConversationList(ctx *gin.Context) {
 
 // 消息列表
 func (h *ChatHandler) GetUserMsgList(ctx *gin.Context) {
+
+	userId := GetUserIdFromCtx(ctx)
+	if userId == 0 {
+		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
+		return
+	}
+
 	var params v1.HistoryMsgListReq
 	if err := ctx.ShouldBind(&params); err != nil {
 		h.logger.Error(err.Error())
@@ -72,6 +86,7 @@ func (h *ChatHandler) GetUserMsgList(ctx *gin.Context) {
 		return
 	}
 
+	params.UserId = userId
 	msgList, err := h.srv.GetMsgList(ctx, params.UserId, params.ConversationId, params.Seq, params.PageNum, params.PageSize)
 	if err != nil {
 		h.logger.Error(err.Error(), zap.Any("params", params))
@@ -83,6 +98,13 @@ func (h *ChatHandler) GetUserMsgList(ctx *gin.Context) {
 
 // 上报已读
 func (h *ChatHandler) ReportReadMsgSeq(ctx *gin.Context) {
+
+	userId := GetUserIdFromCtx(ctx)
+	if userId == 0 {
+		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
+		return
+	}
+
 	var params v1.ReportReadReq
 	if err := ctx.ShouldBind(&params); err != nil {
 		h.logger.Error(err.Error())
@@ -90,6 +112,7 @@ func (h *ChatHandler) ReportReadMsgSeq(ctx *gin.Context) {
 		return
 	}
 
+	params.UserId = userId
 	if err := h.srv.ReportReadMsgSeq(ctx, &params); err != nil {
 		h.logger.Error(err.Error(), zap.Any("params", params))
 	}

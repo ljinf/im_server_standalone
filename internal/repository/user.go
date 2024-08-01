@@ -121,7 +121,7 @@ func (r *userRepository) GetAccountInfoByID(ctx context.Context, userId int64) (
 		return nil, err
 	}
 
-	if err = cache.SetAccountInfoCache(r.rdb, &info); err != nil {
+	if err = cache.SetAccountInfoCache(r.rdb, info); err != nil {
 		r.logger.Error(err.Error(), zap.Any("info", info))
 	}
 

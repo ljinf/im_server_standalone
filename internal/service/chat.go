@@ -11,13 +11,19 @@ import (
 
 type ChatService interface {
 	CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.SendMsgResp, error)
+	//历史消息
 	GetMsgList(ctx context.Context, userId, conversationId, seq int64, pageNum, pageSize int) ([]v1.SendMsgResp, error)
 
+	// 会话
 	GetUserConversationList(ctx context.Context, userId int64) ([]v1.ConversationResp, error)
 	GetConversationUsers(ctx context.Context, conversationId int64) ([]v1.GetProfileResponseData, error) //会话下的用户
+	//创建会话
 	CreateConversationList(ctx context.Context, list ...*model.ConversationList) error
+
+	//该会话最新一条消息
 	GetLastConversationMsg(ctx context.Context, conversationId int64) v1.SendMsgResp
 
+	//已读上报
 	ReportReadMsgSeq(ctx context.Context, req *v1.ReportReadReq) error
 }
 
@@ -110,7 +116,7 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 		}
 		mSeq = cMsg.Seq
 		//消息体
-		return s.repo.CreateMsg(ctx, msg)
+		return s.repo.CreateMsg(ctx, msg, mSeq)
 	}); err != nil {
 		s.logger.Error(err.Error(), zap.Any("req", req))
 		return nil, err

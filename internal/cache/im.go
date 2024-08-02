@@ -260,17 +260,25 @@ func GetConversationMsgList(rdb *redis.Client, convId, seq, pageNum, pageSize in
 		end   = start + pageNum - 1
 	)
 
-	msgIds := rdb.ZRevRangeByScore(ctx, key, &redis.ZRangeBy{
+	msgIds, err := rdb.ZRevRangeByScore(ctx, key, &redis.ZRangeBy{
 		Min:    fmt.Sprintf("%v", seq),
 		Max:    fmt.Sprintf("%v", math.MaxInt64),
 		Offset: start,
 		Count:  end,
-	}).Args()
+	}).Result()
+	if err != nil {
+		return nil, err
+	}
 	if len(msgIds) < 1 {
 		return nil, errors.New("msgIds is nil")
 	}
 
-	msgList, err := GetMsgCache(rdb, msgIds...)
+	ids := make([]interface{}, 0, len(msgIds))
+	for _, v := range msgIds {
+		ids = append(ids, v)
+	}
+
+	msgList, err := GetMsgCache(rdb, ids...)
 	if err != nil {
 		return nil, err
 	}

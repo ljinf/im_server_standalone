@@ -15,7 +15,7 @@ type ChatService interface {
 	GetMsgList(ctx context.Context, userId, conversationId, seq int64, pageNum, pageSize int) ([]v1.SendMsgResp, error)
 
 	// 会话
-	GetUserConversationList(ctx context.Context, userId int64) ([]v1.ConversationResp, error)
+	GetUserConversationList(ctx context.Context, userId, pageNum, pageSize int64) ([]v1.ConversationResp, error)
 	GetConversationUsers(ctx context.Context, conversationId int64) ([]v1.GetProfileResponseData, error) //会话下的用户
 	//创建会话
 	CreateConversationList(ctx context.Context, list ...*model.ConversationList) error
@@ -118,6 +118,10 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 		//消息体
 		return s.repo.CreateMsg(ctx, msg, mSeq)
 	}); err != nil {
+		if mSeq > 0 {
+			//序号回滚
+			s.repo.DecrMsgSeq(ctx, msg.ConversationId)
+		}
 		s.logger.Error(err.Error(), zap.Any("req", req))
 		return nil, err
 	}
@@ -159,19 +163,28 @@ func (s *chatService) GetMsgList(ctx context.Context, userId, conversationId, se
 	return resp, nil
 }
 
-func (s *chatService) GetUserConversationList(ctx context.Context, userId int64) ([]v1.ConversationResp, error) {
-	userConversationList, err := s.repo.SelectUserConversationList(ctx, userId)
+func (s *chatService) GetUserConversationList(ctx context.Context, userId, pageNum, pageSize int64) ([]v1.ConversationResp, error) {
+	userConversationList, err := s.repo.SelectUserConversationList(ctx, userId, pageNum, pageSize)
 	if err != nil {
 		s.logger.Error(err.Error(), zap.Any("userId", userId))
 		return nil, v1.ErrInternalServerError
 	}
 
-	resp := make([]v1.ConversationResp, 0, len(userConversationList))
+	convIds := make([]int64, 0, len(userConversationList))
 	for _, v := range userConversationList {
+		convIds = append(convIds, v.ConversationId)
+	}
+	conversationLists, err := s.repo.SelectConversation(ctx, convIds...)
+	if err != nil {
+		return nil, v1.ErrInternalServerError
+	}
+
+	resp := make([]v1.ConversationResp, 0, len(userConversationList))
+	for index, v := range userConversationList {
 		resp = append(resp, v1.ConversationResp{
 			ConversationId: v.ConversationId,
-			Type:           v.Type,
-			Avatar:         v.Avatar,
+			Type:           conversationLists[index].Type,
+			Avatar:         conversationLists[index].Avatar,
 			LastReadSeq:    v.LastReadSeq,
 			NotifyType:     v.NotifyType,
 			IsTop:          v.IsTop,
@@ -227,7 +240,7 @@ func (s *chatService) GetLastConversationMsg(ctx context.Context, conversationId
 	return v1.SendMsgResp{
 		ConversationId: lastMsg.ConversationId,
 		MsgId:          lastMsg.MsgId,
-		UserId:         lastMsg.MsgId,
+		UserId:         lastMsg.UserId,
 		Seq:            lastMsg.Seq,
 		Content:        lastMsg.Content,
 		ContentType:    lastMsg.ContentType,

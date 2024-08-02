@@ -86,13 +86,14 @@ func (r *relationshipService) GetApplyFriendshipList(ctx context.Context, userId
 func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req *v1.ApplyFriendshipRequest) error {
 	err := r.tm.Transaction(ctx, func(ctx context.Context) error {
 
-		// 修改申请状态
+		// 修改申请状态  被申请人
 		applyB := model.ApplyFriendshipList{
 			UserId:   req.UserId,
 			TargetId: req.TargetId,
 			Status:   req.Status,
 		}
 
+		//申请人
 		applyA := model.ApplyFriendshipList{
 			UserId:   req.TargetId,
 			TargetId: req.UserId,

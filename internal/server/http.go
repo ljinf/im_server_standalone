@@ -93,7 +93,7 @@ func NewHTTPServer(
 		chatGroup := v1.Group("/chat").Use(middleware.StrictAuth(jwt, logger))
 		{
 			chatGroup.POST("/send", chatHandler.SendChatMessage)
-			chatGroup.GET("/conversation/list", chatHandler.GetUserConversationList)
+			chatGroup.POST("/conversation/list", chatHandler.GetUserConversationList)
 			chatGroup.POST("/msg/history/list", chatHandler.GetUserMsgList)
 			chatGroup.POST("/report/msg/read", chatHandler.ReportReadMsgSeq)
 		}

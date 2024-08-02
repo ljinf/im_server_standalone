@@ -60,7 +60,14 @@ func (h *ChatHandler) GetUserConversationList(ctx *gin.Context) {
 		return
 	}
 
-	conversationList, err := h.srv.GetUserConversationList(ctx, userId)
+	var params v1.ConversationMsgListReq
+	if err := ctx.ShouldBind(&params); err != nil {
+		h.logger.Error(err.Error())
+		v1.HandleError(ctx, http.StatusOK, v1.ErrBadRequest, nil)
+		return
+	}
+
+	conversationList, err := h.srv.GetUserConversationList(ctx, userId, int64(params.PageNum), int64(params.PageSize))
 	if err != nil {
 		h.logger.Error(err.Error(), zap.Any("userId", userId))
 		v1.HandleError(ctx, http.StatusOK, v1.ErrInternalServerError, nil)

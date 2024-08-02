@@ -30,7 +30,7 @@ type ApplyFriendshipList struct {
 	TargetId    int64          `json:"target_id"`   //用户id 对方
 	Remark      string         `json:"remark"`      //对方的别名备注
 	Description string         `json:"description"` //申请描述
-	Status      int            `json:"status"`      //状态 1申请中 2通过 3被拒绝
+	Status      int            `json:"status"`      //状态 1申请中 2待处理 3通过 4被拒绝 5过期
 	CreatedAt   time.Time      `json:"-"`
 	UpdatedAt   time.Time      `json:"-"`
 	DeletedAt   gorm.DeletedAt `json:"-"`

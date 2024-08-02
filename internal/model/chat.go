@@ -84,7 +84,7 @@ type UserConversationList struct {
 	ConversationId int64 `json:"conversation_id"` //会话ID
 	LastReadSeq    int64 `json:"last_read_seq"`   //此会话用户已读的最后一条消息
 	NotifyType     int   `json:"notify_type"`     //会话收到消息的提醒类型，0未屏蔽，正常提醒 1屏蔽 2强提醒
-	IsTop          int   `json:"is_top"`          //会话是否被置顶展示
+	IsTop          int   `json:"is_top"`          //会话是否被置顶展示 0否 1是
 	CreatedAt      int64 `json:"created_at"`
 	UpdatedAt      int64 `json:"updated_at"`
 }

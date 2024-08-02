@@ -15,20 +15,25 @@ import (
 const ctxTxKey = "TxKey"
 
 type Repository struct {
-	db     *gorm.DB
-	rdb    *redis.Client
-	logger *log.Logger
+	db             *gorm.DB
+	rdb            *redis.Client
+	logger         *log.Logger
+	cacheMsgLength int
+	remCount       int
 }
 
 func NewRepository(
+	conf *viper.Viper,
 	logger *log.Logger,
 	db *gorm.DB,
 	rdb *redis.Client,
 ) *Repository {
 	return &Repository{
-		db:     db,
-		rdb:    rdb,
-		logger: logger,
+		db:             db,
+		rdb:            rdb,
+		logger:         logger,
+		cacheMsgLength: conf.GetInt("cache_msg.max_length"),
+		remCount:       conf.GetInt("cache_msg.rem_count"),
 	}
 }
 

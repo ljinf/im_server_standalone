@@ -29,7 +29,7 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger, pool *ants.Pool) (*app
 	handlerHandler := handler.NewHandler(logger)
 	db := repository.NewDB(viperViper, logger)
 	client := repository.NewRedis(viperViper)
-	repositoryRepository := repository.NewRepository(logger, db, client)
+	repositoryRepository := repository.NewRepository(viperViper, logger, db, client)
 	transaction := repository.NewTransaction(repositoryRepository)
 	sidSid := sid.NewSid()
 	serviceService := service.NewService(transaction, logger, sidSid, jwtJWT)

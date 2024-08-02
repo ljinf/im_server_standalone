@@ -15,6 +15,7 @@ var (
 	AccountInfoCachePrefix = cachePrefix + "user:info:"
 )
 
+// 不过期
 func SetAccountInfoCache(rdb *redis.Client, info ...model.AccountInfo) error {
 
 	list := make(map[string]interface{})

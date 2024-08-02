@@ -1,8 +1,8 @@
 package v1
 
 type ApplyFriendshipRequest struct {
-	UserId      int64  `json:"user_id"`                                  //用户id 拥有者
-	TargetId    int64  `json:"target_id" binding:"required" example:"1"` //用户id 对方
+	UserId      int64  `json:"user_id"`                                  //用户id 拥有者  被申请人
+	TargetId    int64  `json:"target_id" binding:"required" example:"1"` //用户id 对方    申请人
 	Remark      string `json:"remark"`                                   //对方的别名备注
 	Description string `json:"description"`                              //申请描述
 	Status      int    `json:"status"`                                   //状态 1申请中 2通过 3被拒绝

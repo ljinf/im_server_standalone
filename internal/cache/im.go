@@ -2,11 +2,12 @@ package cache
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ljinf/im_server_standalone/internal/model"
 	"github.com/redis/go-redis/v9"
+	"math"
 	"math/rand"
-	"strconv"
 	"time"
 )
 
@@ -30,12 +31,19 @@ var (
 
 	//消息
 	MsgInfoCachePrefix = cachePrefix + "msg:info:"
-	MsgExpire          = 259200 //72 hour
+	MsgExpire          = 604800 //7天
 )
 
+// 加1
 func IncrConversationMsg(rdb *redis.Client, conversationId int64) int64 {
 	key := fmt.Sprintf("%v%v", IncrConversationMsgPrefix, conversationId)
 	return rdb.Incr(ctx, key).Val()
+}
+
+// 减1
+func DecrConversationMsg(rdb *redis.Client, conversationId int64) {
+	key := fmt.Sprintf("%v%v", IncrConversationMsgPrefix, conversationId)
+	rdb.IncrBy(ctx, key, -1)
 }
 
 // 最近消息缓存  String类型
@@ -117,52 +125,77 @@ func GetConversationCache(rdb *redis.Client, convIds ...int64) ([]model.Conversa
 	return convList, nil
 }
 
-// 用户的会话设置  hash类型
-func SetUserConversationCache(rdb *redis.Client, info *model.UserConversationList) error {
-	data, err := json.Marshal(info)
-	if err != nil {
-		return err
+// 用户的会话设置  zset类型
+func SetUserConversationCache(rdb *redis.Client, info ...model.UserConversationList) error {
+	if len(info) > 0 {
+		list := make([]redis.Z, 0, len(info))
+		key := fmt.Sprintf("%v%v", UserConversationInfoPrefix, info[0].UserId)
+		for _, v := range info {
+			data, err := json.Marshal(v)
+			if err != nil {
+				return err
+			}
+			list = append(list, redis.Z{
+				Score:  float64(v.ConversationId),
+				Member: string(data),
+			})
+		}
+		if err := rdb.ZAdd(ctx, key, list...).Err(); err != nil {
+			return err
+		}
+		return rdb.Expire(ctx, key, time.Duration(rand.Intn(randTime)+userConversationExpire)).Err()
 	}
-	key := fmt.Sprintf("%v%v", UserConversationInfoPrefix, info.UserId)
-	if err = rdb.HSet(ctx, key, info.ConversationId, string(data)).Err(); err != nil {
-		return err
-	}
-	return rdb.Expire(ctx, key, time.Duration(rand.Intn(randTime)+userConversationExpire)).Err()
+	return nil
 }
 
-func GetUserConversationCache(rdb *redis.Client, userId int64, convIds ...int64) ([]model.UserConversationList, error) {
+// 列表
+func GetUserConversationListCache(rdb *redis.Client, userId, pageNum, pageSize int64) ([]model.UserConversationList, error) {
 	var (
-		length = len(convIds)
-		list   = make([]model.UserConversationList, 0, length)
-		key    = fmt.Sprintf("%v%v", UserConversationInfoPrefix, userId)
+		list  = make([]model.UserConversationList, 0, pageSize)
+		key   = fmt.Sprintf("%v%v", UserConversationInfoPrefix, userId)
+		start = (pageNum - 1) * pageSize
+		end   = start + pageSize - 1
 	)
 
-	if length > 0 {
-		fields := make([]string, 0, length)
-		for _, v := range convIds {
-			fields = append(fields, strconv.Itoa(int(v)))
-		}
+	result, err := rdb.ZRange(ctx, key, start, end).Result()
+	if err != nil {
+		return nil, err
+	}
 
-		result, err := rdb.HMGet(ctx, key, fields...).Result()
-		if err != nil {
+	for _, v := range result {
+		item := model.UserConversationList{}
+		if err = json.Unmarshal([]byte(v), &item); err != nil {
 			return nil, err
 		}
-
-		for _, v := range result {
-			item := model.UserConversationList{}
-			if err = json.Unmarshal([]byte(v.(string)), &item); err != nil {
-				return nil, err
-			}
-			list = append(list, item)
-		}
+		list = append(list, item)
 	}
 
 	return list, nil
 }
 
-func DelUserConversationCache(rdb *redis.Client, userId int64, convIds ...string) error {
+// 单个
+func GetUserConversationCache(rdb *redis.Client, userId, convId int64) (*model.UserConversationList, error) {
 	key := fmt.Sprintf("%v%v", UserConversationInfoPrefix, userId)
-	return rdb.HDel(ctx, key, convIds...).Err()
+	min := fmt.Sprintf("%v", convId)
+	result, err := rdb.ZRangeByScore(ctx, key, &redis.ZRangeBy{
+		Min: min,
+		Max: min,
+	}).Result()
+	if err != nil {
+		return nil, err
+	}
+	if len(result) > 0 {
+		item := &model.UserConversationList{}
+		if err = json.Unmarshal([]byte(result[0]), item); err != nil {
+			return nil, err
+		}
+		return item, nil
+	}
+	return nil, errors.New("not Found")
+}
+
+func DelUserConversationCache(rdb *redis.Client, userId int64) error {
+	return rdb.Del(ctx, fmt.Sprintf("%v%v", UserConversationInfoPrefix, userId)).Err()
 }
 
 // 会话下的用户列表(群聊)  set类型
@@ -187,10 +220,14 @@ func RemConversationUserListCache(rdb *redis.Client, convId int64, uids ...int64
 	return rdb.SRem(ctx, key, members...).Err()
 }
 
-// 获取会话的用户ID列表
-func GetConversationUserListCache(rdb *redis.Client, convId int64) ([]string, error) {
+// 获取会话的用户列表
+func GetConversationUserListCache(rdb *redis.Client, convId int64) ([]model.UserInfo, error) {
 	key := fmt.Sprintf("%v%v", ConversationUserListPrefix, convId)
-	return rdb.SMembers(ctx, key).Result()
+	userIds, err := rdb.SMembers(ctx, key).Result()
+	if err != nil {
+		return nil, err
+	}
+	return GetUserInfoListCache(rdb, userIds...)
 }
 
 // 会话下的用户数
@@ -200,26 +237,69 @@ func GetConversationUserCount(rdb *redis.Client, convId int64) (int64, error) {
 }
 
 // 会话消息链 ,最近消息
-func AddConversationMsgCache(rdb *redis.Client, msg *model.MsgResp) error {
-	key := fmt.Sprintf("%v%v", ConversationMsgListPrefix, msg.ConversationId)
-
-	return rdb.ZAdd(ctx, key, redis.Z{
-		Score:  float64(msg.Seq),
-		Member: msg.MsgId,
-	}).Err()
+func AddConversationMsgCache(rdb *redis.Client, msgs ...model.MsgResp) error {
+	if len(msgs) > 0 {
+		key := fmt.Sprintf("%v%v", ConversationMsgListPrefix, msgs[0].ConversationId)
+		cacheList := make([]redis.Z, 0, len(msgs))
+		for _, v := range msgs {
+			cacheList = append(cacheList, redis.Z{
+				Score:  float64(v.Seq),
+				Member: v.MsgId,
+			})
+		}
+		return rdb.ZAdd(ctx, key, cacheList...).Err()
+	}
+	return nil
 }
 
-// 会话下的消息Id列表
-func GetConversationMsgList(rdb *redis.Client, convId, pageNum, pageSize int64) ([]string, error) {
+// 会话下的最近消息列表
+func GetConversationMsgList(rdb *redis.Client, convId, seq, pageNum, pageSize int64) ([]model.MsgResp, error) {
 	var (
 		key   = fmt.Sprintf("%v%v", ConversationMsgListPrefix, convId)
 		start = (pageNum - 1) * pageSize
 		end   = start + pageNum - 1
 	)
-	return rdb.ZRevRange(ctx, key, start, end).Result()
+
+	msgIds := rdb.ZRevRangeByScore(ctx, key, &redis.ZRangeBy{
+		Min:    fmt.Sprintf("%v", seq),
+		Max:    fmt.Sprintf("%v", math.MaxInt64),
+		Offset: start,
+		Count:  end,
+	}).Args()
+	if len(msgIds) < 1 {
+		return nil, errors.New("msgIds is nil")
+	}
+
+	msgList, err := GetMsgCache(rdb, msgIds...)
+	if err != nil {
+		return nil, err
+	}
+	return msgList, nil
 }
 
-// 会话下的消息总数
+// 最新一条
+func GetConversationNewestMsg(rdb *redis.Client, convId int64) (*model.MsgResp, error) {
+	var (
+		key = fmt.Sprintf("%v%v", ConversationMsgListPrefix, convId)
+	)
+
+	msgIds, err := rdb.ZRevRange(ctx, key, 0, 0).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(msgIds) > 0 {
+		msgList, err := GetMsgCache(rdb, msgIds[0])
+		if err != nil {
+			return nil, err
+		}
+		return &msgList[0], nil
+	}
+
+	return nil, errors.New("not found")
+}
+
+// 会话下的最近消息总数
 func GetConversationMsgCount(rdb *redis.Client, convId int64) (int64, error) {
 	key := fmt.Sprintf("%v%v", ConversationMsgListPrefix, convId)
 	return rdb.ZCard(ctx, key).Result()

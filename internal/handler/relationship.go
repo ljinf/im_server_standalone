@@ -65,7 +65,7 @@ func (h *RelationshipHandler) UpdateApplyFriendshipInfo(ctx *gin.Context) {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}
-
+	// 被申请人才操作
 	var param v1.ApplyFriendshipRequest
 	if err := ctx.ShouldBind(&param); err != nil {
 		h.logger.Error(err.Error())

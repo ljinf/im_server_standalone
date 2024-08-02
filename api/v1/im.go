@@ -46,3 +46,9 @@ type ReportReadReq struct {
 	ConversationId int64 `json:"conversation_id" binding:"required" example:"123456"` //会话ID
 	Seq            int64 `json:"seq"`                                                 //消息序列号
 }
+
+type ConversationMsgListReq struct {
+	UserId   int64 `json:"user_id"` //用户ID
+	PageNum  int   `json:"page_num" binding:"required" example:"1"`
+	PageSize int   `json:"page_size" binding:"required" example:"10"`
+}

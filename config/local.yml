@@ -34,3 +34,8 @@ log:
   max_age: 7
   max_size: 8
   compress: true
+
+
+cache_msg:
+  max_length: 300 # 会话缓存消息队列最大长度
+  rem_count: 60 #满了以后，删除多少

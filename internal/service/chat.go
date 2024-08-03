@@ -5,6 +5,7 @@ import (
 	v1 "github.com/ljinf/im_server_standalone/api/v1"
 	"github.com/ljinf/im_server_standalone/internal/model"
 	"github.com/ljinf/im_server_standalone/internal/repository"
+	"github.com/ljinf/im_server_standalone/pkg/contants"
 	"go.uber.org/zap"
 	"time"
 )
@@ -181,7 +182,7 @@ func (s *chatService) GetUserConversationList(ctx context.Context, userId, pageN
 
 	resp := make([]v1.ConversationResp, 0, len(userConversationList))
 	for index, v := range userConversationList {
-		resp = append(resp, v1.ConversationResp{
+		conv := v1.ConversationResp{
 			ConversationId: v.ConversationId,
 			Type:           conversationLists[index].Type,
 			Avatar:         conversationLists[index].Avatar,
@@ -189,7 +190,13 @@ func (s *chatService) GetUserConversationList(ctx context.Context, userId, pageN
 			NotifyType:     v.NotifyType,
 			IsTop:          v.IsTop,
 			RecentMsg:      s.GetLastConversationMsg(ctx, v.ConversationId),
-		})
+		}
+		//单聊会话获取用户列表
+		if conv.Type == contants.ConversationTypeC2C {
+			conversationUsers, _ := s.GetConversationUsers(ctx, v.ConversationId)
+			conv.UserList = conversationUsers //会话用户列表
+		}
+		resp = append(resp, conv)
 	}
 	return resp, nil
 }
@@ -215,7 +222,7 @@ func (s *chatService) ReportReadMsgSeq(ctx context.Context, req *v1.ReportReadRe
 func (s *chatService) GetConversationUsers(ctx context.Context, conversationId int64) ([]v1.GetProfileResponseData, error) {
 	users, err := s.repo.SelectConversationUsers(ctx, conversationId)
 	if err != nil {
-		s.logger.Error(err.Error())
+		s.logger.Error(err.Error(), zap.Any("convId", conversationId))
 	}
 
 	resp := make([]v1.GetProfileResponseData, 0, len(users))

@@ -17,6 +17,9 @@ const (
 	RelationshipStatusBlock  = 2 //拉黑
 	RelationshipStatusDel    = 3 //删除
 
+	ConversationTypeC2C   = 0 //单聊
+	ConversationTypeGroup = 1 //群聊
+
 	MsgTypeNotify  = 1 //通知消息
 	MsgTypeCommand = 2 //指令消息
 	MsgTypeChat    = 3 //普通聊天消息

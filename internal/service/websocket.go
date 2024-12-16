@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	v1 "github.com/ljinf/im_server_standalone/api/v1"
 	"github.com/ljinf/im_server_standalone/internal/model"
@@ -43,11 +44,14 @@ func (w *websocketService) InitConn(userId int64, conn *websocket.Conn) {
 		return
 	}
 
+	w.logger.Debug("accept conn", zap.Any("conn userid", wsConn.ConnId))
+
 	wsConn.Work(w.ProcessMsg)
 }
 
 // 推送
 func (w *websocketService) PushMsg(payload []byte, userIds ...int64) {
+	w.logger.Debug(fmt.Sprintf("push to user%v ", userIds))
 	if err := w.Push(payload, userIds...); err != nil {
 		w.logger.Error(err.Error())
 	}

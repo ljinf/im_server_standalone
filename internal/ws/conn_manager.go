@@ -57,13 +57,14 @@ func NewBucket(index, len int) *bucket {
 }
 
 func (b *bucket) Add(conn *WsConn) error {
-	b.mutx.Lock()
-	defer b.mutx.Unlock()
 	if len(b.conns) < b.len {
-		if old, ok := b.conns[conn.ConnId]; ok {
+		b.mutx.Lock()
+		old, ok := b.conns[conn.ConnId]
+		b.conns[conn.ConnId] = conn
+		b.mutx.Unlock()
+		if ok {
 			old.Close()
 		}
-		b.conns[conn.ConnId] = conn
 		return nil
 	}
 	return errors.New(fmt.Sprintf("bucket %v 连接数已满", b.index))
@@ -78,8 +79,7 @@ func (b *bucket) Get(id int64) *WsConn {
 func (b *bucket) Rem(id int64) error {
 	b.mutx.Lock()
 	defer b.mutx.Unlock()
-	if old, ok := b.conns[id]; ok {
-		old.Close()
+	if _, ok := b.conns[id]; ok {
 		delete(b.conns, id)
 		return nil
 	}

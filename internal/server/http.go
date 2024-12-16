@@ -53,7 +53,7 @@ func NewHTTPServer(
 		})
 	})
 
-	s.GET("/ws", middleware.StrictAuth(jwt, logger), wsHandler.AcceptConn)
+	s.GET("/ws", wsHandler.AcceptConn)
 
 	v1 := s.Group("/v1")
 	{
@@ -67,6 +67,7 @@ func NewHTTPServer(
 		noStrictAuthRouter := v1.Group("/").Use(middleware.NoStrictAuth(jwt, logger))
 		{
 			noStrictAuthRouter.GET("/user", userHandler.GetProfile)
+			noStrictAuthRouter.POST("/search", userHandler.SearchProfile)
 		}
 
 		// Strict permission routing group
@@ -94,7 +95,8 @@ func NewHTTPServer(
 		{
 			chatGroup.POST("/send", chatHandler.SendChatMessage)
 			chatGroup.POST("/conversation/list", chatHandler.GetUserConversationList)
-			chatGroup.POST("/msg/history/list", chatHandler.GetUserMsgList)
+			chatGroup.POST("/msg/history/list", chatHandler.GetUserMsgList) //历史
+			chatGroup.POST("/msg/lasted/list", chatHandler.GetUserMsgList)  // 最近
 			chatGroup.POST("/report/msg/read", chatHandler.ReportReadMsgSeq)
 		}
 	}

@@ -16,6 +16,7 @@ type UserService interface {
 	Login(ctx context.Context, req *v1.LoginRequest) (string, error)
 	// 用户信息
 	GetProfile(ctx context.Context, userId int64) (*v1.GetProfileResponseData, error)
+	GetProfileByEmail(ctx context.Context, email string) (*v1.GetProfileResponseData, error)
 	UpdateProfile(ctx context.Context, userId int64, req *v1.UpdateProfileRequest) error
 	// 更新注册表
 	UpdateRegisterInfo(ctx context.Context, userId int64, req *v1.UpdateRegisterInfoRequest) error
@@ -158,4 +159,20 @@ func (s *userService) UpdateProfile(ctx context.Context, userId int64, req *v1.U
 	}
 
 	return nil
+}
+
+func (s *userService) GetProfileByEmail(ctx context.Context, email string) (*v1.GetProfileResponseData, error) {
+	user, err := s.userRepo.GetAccountInfoByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.GetProfileResponseData{
+		UserId:   user.UserId,
+		NickName: user.NickName,
+		Phone:    user.Phone,
+		Email:    user.Email,
+		Avatar:   user.Avatar,
+		Gender:   user.Gender,
+	}, nil
 }

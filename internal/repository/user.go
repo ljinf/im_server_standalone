@@ -22,6 +22,7 @@ type UserRepository interface {
 	UpdateUserInfo(ctx context.Context, req *model.UserInfo) error
 
 	GetAccountInfoByID(ctx context.Context, userId int64) (*model.AccountInfo, error)
+	GetAccountInfoByEmail(ctx context.Context, email string) (*model.AccountInfo, error)
 }
 
 func NewUserRepository(r *Repository) UserRepository {
@@ -125,5 +126,15 @@ func (r *userRepository) GetAccountInfoByID(ctx context.Context, userId int64) (
 		r.logger.Error(err.Error(), zap.Any("info", info))
 	}
 
+	return &info, nil
+}
+
+func (r *userRepository) GetAccountInfoByEmail(ctx context.Context, email string) (*model.AccountInfo, error) {
+	var info model.AccountInfo
+	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`gender`,r.`email`,r.`phone` " +
+		"FROM `user_info` u INNER JOIN `register` r ON u.`user_id`=r.`user_id` WHERE r.`email`=?"
+	if err := r.DB(ctx).Raw(querySql, email).Scan(&info).Error; err != nil {
+		return nil, err
+	}
 	return &info, nil
 }

@@ -8,13 +8,16 @@ import (
 
 type Handler struct {
 	logger *log.Logger
+	jwt    *jwt.JWT
 }
 
 func NewHandler(
 	logger *log.Logger,
+	j *jwt.JWT,
 ) *Handler {
 	return &Handler{
 		logger: logger,
+		jwt:    j,
 	}
 }
 func GetUserIdFromCtx(ctx *gin.Context) int64 {

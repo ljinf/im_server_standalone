@@ -26,7 +26,7 @@ import (
 
 func NewWire(viperViper *viper.Viper, logger *log.Logger, pool *ants.Pool) (*app.App, func(), error) {
 	jwtJWT := jwt.NewJwt(viperViper)
-	handlerHandler := handler.NewHandler(logger)
+	handlerHandler := handler.NewHandler(logger, jwtJWT)
 	db := repository.NewDB(viperViper, logger)
 	client := repository.NewRedis(viperViper)
 	repositoryRepository := repository.NewRepository(viperViper, logger, db, client)
@@ -42,7 +42,7 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger, pool *ants.Pool) (*app
 	websocketService := service.NewWebsocketService(serviceService, socketWsServer, chatService, pool)
 	webSocketHandler := handler.NewWebSocketHandler(handlerHandler, websocketService)
 	relationshipRepository := repository.NewRelationshipRepository(repositoryRepository)
-	relationshipService := service.NewRelationshipService(serviceService, relationshipRepository)
+	relationshipService := service.NewRelationshipService(serviceService, relationshipRepository, userRepository)
 	relationshipHandler := handler.NewRelationshipHandler(handlerHandler, relationshipService, chatService)
 	chatHandler := handler.NewChatHandler(handlerHandler, chatService, websocketService)
 	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler, webSocketHandler, relationshipHandler, chatHandler)

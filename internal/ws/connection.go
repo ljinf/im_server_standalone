@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/ljinf/im_server_standalone/pkg/log"
+	"go.uber.org/zap"
 	"sync"
 	"sync/atomic"
 )
@@ -42,6 +43,8 @@ func (c *WsConn) Work(handler Dispatch) {
 func (c *WsConn) readLoop(handler Dispatch) {
 	defer func() {
 		c.logger.Debug(fmt.Sprintf("%v readLoop closed", c.ConnId))
+		c.Close()
+		c.RemCurConn()
 	}()
 	for {
 		messageType, payload, err := c.Conn.ReadMessage()
@@ -50,6 +53,7 @@ func (c *WsConn) readLoop(handler Dispatch) {
 			return
 		}
 		if messageType == websocket.PingMessage || messageType == websocket.PongMessage {
+			c.logger.Debug("ping/pong")
 			continue
 		}
 		handler(c.ConnId, payload)
@@ -69,19 +73,28 @@ func (c *WsConn) writeLoop() {
 		c.logger.Debug(fmt.Sprintf("%v writeLoop closed", c.ConnId))
 	}()
 	for v := range c.outChan {
-		if err := c.Conn.WriteMessage(websocket.BinaryMessage, v); err != nil {
+		c.logger.Debug("msg from chan push", zap.Any("msg", string(v)))
+		if err := c.Conn.WriteMessage(websocket.TextMessage, v); err != nil {
 			c.logger.Error(err.Error())
 			break
 		}
 	}
 }
 
+func (c *WsConn) RemCurConn() {
+	// 移除当前连接
+	if err := c.connManager.RemConn(c.ConnId); err == nil {
+		c.logger.Debug("remove conn", zap.Any("connId", c.ConnId))
+	} else {
+		c.logger.Error(fmt.Sprintf("rm conn err:%v", err))
+	}
+}
+
 func (c *WsConn) Close() {
 	c.once.Do(func() {
+		c.logger.Debug(fmt.Sprintf("%v close...", c.ConnId))
 		_ = c.Conn.Close()
 		close(c.outChan)
 		atomic.CompareAndSwapInt32(&c.isClose, 0, 1)
-		// 移除当前连接
-		_ = c.connManager.RemConn(c.ConnId)
 	})
 }

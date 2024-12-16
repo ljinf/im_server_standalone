@@ -69,6 +69,9 @@ func GetUserInfoListCache(rdb *redis.Client, uids ...string) ([]model.UserInfo, 
 		}
 
 		for _, v := range result {
+			if v == nil {
+				return nil, errors.New("nil")
+			}
 			item := model.UserInfo{}
 			if err = json.Unmarshal([]byte(v.(string)), &item); err != nil {
 				return nil, err

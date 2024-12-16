@@ -26,13 +26,15 @@ type RelationshipService interface {
 
 type relationshipService struct {
 	*Service
-	repo repository.RelationshipRepository
+	relationRepo repository.RelationshipRepository
+	userRepo     repository.UserRepository
 }
 
-func NewRelationshipService(s *Service, repo repository.RelationshipRepository) RelationshipService {
+func NewRelationshipService(s *Service, repo repository.RelationshipRepository, userRepo repository.UserRepository) RelationshipService {
 	return &relationshipService{
-		Service: s,
-		repo:    repo,
+		Service:      s,
+		relationRepo: repo,
+		userRepo:     userRepo,
 	}
 }
 
@@ -58,10 +60,10 @@ func (r *relationshipService) AddApplyFriendship(ctx context.Context, req *v1.Ap
 	}
 
 	if err := r.tm.Transaction(ctx, func(ctx context.Context) error {
-		if err := r.repo.CreateApplyFriendship(ctx, &applyA); err != nil {
+		if err := r.relationRepo.CreateApplyFriendship(ctx, &applyA); err != nil {
 			return err
 		}
-		return r.repo.CreateApplyFriendship(ctx, &applyB)
+		return r.relationRepo.CreateApplyFriendship(ctx, &applyB)
 	}); err != nil {
 		r.logger.Error(err.Error(), zap.Any("req", applyA))
 		return v1.ErrAddApplyFriendshipFailed
@@ -71,7 +73,7 @@ func (r *relationshipService) AddApplyFriendship(ctx context.Context, req *v1.Ap
 }
 
 func (r *relationshipService) GetApplyFriendshipList(ctx context.Context, userId int64, page int, pageSize int) (interface{}, error) {
-	list, err := r.repo.SelectApplyFriendshipList(ctx, userId, page, pageSize)
+	list, err := r.relationRepo.SelectApplyFriendshipList(ctx, userId, page, pageSize)
 	if err != nil {
 		r.logger.Error(err.Error(), zap.Any("userId", userId))
 		return nil, v1.ErrInternalServerError
@@ -100,12 +102,12 @@ func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req
 			Status:   req.Status,
 		}
 
-		if err := r.repo.UpdateApplyFriendship(ctx, &applyA); err != nil {
+		if err := r.relationRepo.UpdateApplyFriendship(ctx, &applyA); err != nil {
 			r.logger.Error(err.Error(), zap.Any("req", applyA))
 			return v1.ErrInternalServerError
 		}
 
-		if err := r.repo.UpdateApplyFriendship(ctx, &applyB); err != nil {
+		if err := r.relationRepo.UpdateApplyFriendship(ctx, &applyB); err != nil {
 			r.logger.Error(err.Error(), zap.Any("req", applyB))
 			return v1.ErrInternalServerError
 		}
@@ -114,7 +116,7 @@ func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req
 		if req.Status == contants.ApplyFriendshipStatusApproved {
 
 			// 添加好友记录
-			applyInfo, err := r.repo.SelectApplyOne(ctx, req.TargetId, req.UserId)
+			applyInfo, err := r.relationRepo.SelectApplyOne(ctx, req.TargetId, req.UserId)
 			if err != nil {
 				r.logger.Error(err.Error(), zap.Any("userId", req.TargetId), zap.Any("targetId", req.UserId))
 				if errors.Is(err, v1.ErrNotFound) {
@@ -140,7 +142,7 @@ func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req
 				CreatedAt:        now,
 				UpdatedAt:        now,
 			}
-			err = r.repo.CreateRelationship(ctx, friendA, friendB)
+			err = r.relationRepo.CreateRelationship(ctx, friendA, friendB)
 			if err != nil {
 				r.logger.Error(err.Error(), zap.Any("friendship", [2]model.RelationshipList{friendA, friendB}))
 				return v1.ErrCreateRelationshipFailed
@@ -153,7 +155,7 @@ func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req
 }
 
 func (r *relationshipService) DelApplyFriendshipInfo(ctx context.Context, req *v1.ApplyFriendshipRequest) error {
-	if err := r.repo.DelApplyFriendship(ctx, req.UserId, req.TargetId); err != nil {
+	if err := r.relationRepo.DelApplyFriendship(ctx, req.UserId, req.TargetId); err != nil {
 		r.logger.Error(err.Error(), zap.Any("req", req))
 		return v1.ErrInternalServerError
 	}
@@ -162,21 +164,43 @@ func (r *relationshipService) DelApplyFriendshipInfo(ctx context.Context, req *v
 
 // 查询列表
 func (r *relationshipService) GetRelationshipList(ctx context.Context, userId int64, relationshipType, page int, pageSize int) (interface{}, error) {
-	list, total, err := r.repo.SelectRelationshipList(ctx, userId, relationshipType, page, pageSize)
+	list, total, err := r.relationRepo.SelectRelationshipList(ctx, userId, relationshipType, page, pageSize)
 	if err != nil {
 		r.logger.Error(err.Error(), zap.Any("userID", userId))
-		return nil, err
+		return nil, v1.ErrInternalServerError
 	}
-	resp := map[string]interface{}{
-		"rows":  list,
+
+	resp := make([]v1.RelationshipRespData, 0, len(list))
+	for _, v := range list {
+		accountInfo, err := r.userRepo.GetAccountInfoByID(ctx, v.TargetId)
+		if err != nil {
+			r.logger.Error(err.Error(), zap.Any("userID", v.TargetId))
+			return nil, err
+		}
+		resp = append(resp, v1.RelationshipRespData{
+			UserId:           accountInfo.UserId,
+			Phone:            accountInfo.Phone,
+			Email:            accountInfo.Email,
+			NickName:         accountInfo.NickName,
+			Avatar:           accountInfo.Avatar,
+			Gender:           accountInfo.Gender,
+			Remark:           v.Remark,
+			RelationshipType: v.RelationshipType,
+			Status:           v.Status,
+			Extra:            v.Extra,
+		})
+	}
+
+	respData := map[string]interface{}{
+		"rows":  resp,
 		"total": total,
 	}
-	return resp, nil
+	return respData, nil
 }
 
 // 查询一个
 func (r *relationshipService) GetRelationship(ctx context.Context, req *v1.RelationshipRequest) (*model.RelationshipList, error) {
-	info, err := r.repo.SelectRelationshipOne(ctx, req.UserId, req.TargetId, req.RelationshipType)
+	info, err := r.relationRepo.SelectRelationshipOne(ctx, req.UserId, req.TargetId, req.RelationshipType)
 	if err != nil {
 		r.logger.Error(err.Error(), zap.Any("param", req))
 		return nil, err
@@ -198,7 +222,7 @@ func (r *relationshipService) AddRelationshipFollow(ctx context.Context, req *v1
 		UpdatedAt:        now,
 	}
 
-	if err := r.repo.CreateRelationship(ctx, ra); err != nil {
+	if err := r.relationRepo.CreateRelationship(ctx, ra); err != nil {
 		r.logger.Error(err.Error(), zap.Any("req", *req))
 		return v1.ErrInternalServerError
 	}
@@ -212,7 +236,7 @@ func (r *relationshipService) UpdateRelationship(ctx context.Context, req *v1.Re
 		Remark:   req.Remark,
 		Status:   req.Status,
 	}
-	if err := r.repo.UpdateRelationship(ctx, &info); err != nil {
+	if err := r.relationRepo.UpdateRelationship(ctx, &info); err != nil {
 		r.logger.Error(err.Error(), zap.Any("req", info))
 		return v1.ErrInternalServerError
 	}
@@ -220,5 +244,5 @@ func (r *relationshipService) UpdateRelationship(ctx context.Context, req *v1.Re
 }
 
 func (r *relationshipService) DelRelationship(ctx context.Context, req *v1.RelationshipRequest) error {
-	return r.repo.DelRelationship(ctx, req.UserId, req.TargetId, req.RelationshipType)
+	return r.relationRepo.DelRelationship(ctx, req.UserId, req.TargetId, req.RelationshipType)
 }

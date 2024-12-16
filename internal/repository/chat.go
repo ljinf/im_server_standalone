@@ -189,8 +189,8 @@ func (r *chatRepository) SelectConversationMsg(ctx context.Context, conversation
 	var list []model.MsgResp
 
 	querySql := "SELECT cml.`seq`,ml.* FROM `conversation_msg_list` cml LEFT JOIN `msg_list` ml ON cml.`msg_id`=ml.`msg_id` " +
-		"WHERE cml.`conversation_id`=? AND cml.`seq`>? ORDER BY cml.seq DESC LIMIT ? OFFSET ?"
-	err = r.DB(ctx).Raw(querySql, conversationId, seq, pageSize, (pageNum-1)*pageSize).Scan(&list).Error
+		"WHERE cml.`conversation_id`=? AND cml.`seq`>? ORDER BY cml.seq DESC LIMIT ?"
+	err = r.DB(ctx).Raw(querySql, conversationId, seq, pageSize).Scan(&list).Error
 	return list, err
 }
 

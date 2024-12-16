@@ -75,6 +75,9 @@ func GetMsgCache(rdb *redis.Client, msgIds ...interface{}) ([]model.MsgResp, err
 		}
 
 		for _, v := range result {
+			if v == nil {
+				return nil, errors.New("nil")
+			}
 			item := model.MsgResp{}
 			if err = json.Unmarshal([]byte(v.(string)), &item); err != nil {
 				return nil, err
@@ -114,6 +117,9 @@ func GetConversationCache(rdb *redis.Client, convIds ...int64) ([]model.Conversa
 		}
 
 		for _, v := range result {
+			if v == nil {
+				return nil, errors.New("nil")
+			}
 			item := model.ConversationList{}
 			if err = json.Unmarshal([]byte(v.(string)), &item); err != nil {
 				return nil, err
@@ -256,11 +262,11 @@ func AddConversationMsgCache(rdb *redis.Client, msgs ...model.MsgResp) error {
 func GetConversationMsgList(rdb *redis.Client, convId, seq, pageNum, pageSize int64) ([]model.MsgResp, error) {
 	var (
 		key   = fmt.Sprintf("%v%v", ConversationMsgListPrefix, convId)
-		start = (pageNum - 1) * pageSize
-		end   = start + pageNum - 1
+		start = seq
+		end   = start + pageSize - 1
 	)
 
-	msgIds, err := rdb.ZRevRangeByScore(ctx, key, &redis.ZRangeBy{
+	msgIds, err := rdb.ZRangeByScore(ctx, key, &redis.ZRangeBy{
 		Min:    fmt.Sprintf("%v", seq),
 		Max:    fmt.Sprintf("%v", math.MaxInt64),
 		Offset: start,

@@ -126,3 +126,38 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 
 	v1.HandleSuccess(ctx, nil)
 }
+
+func (h *UserHandler) SearchProfile(ctx *gin.Context) {
+
+	var (
+		user *v1.GetProfileResponseData
+		err  error
+	)
+
+	var req v1.SearchUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)
+		return
+	}
+
+	//userId := GetUserIdFromCtx(ctx)
+	//if userId == 0 {
+	//	v1.HandleError(ctx, http.StatusUnauthorized, v1.ErrUnauthorized, nil)
+	//	return
+	//}
+
+	if req.UserId != 0 {
+		user, err = h.userService.GetProfile(ctx, req.UserId)
+		if err != nil {
+			v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)
+			return
+		}
+	} else if len(req.Email) > 0 {
+		user, err = h.userService.GetProfileByEmail(ctx, req.Email)
+		if err != nil {
+			v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)
+			return
+		}
+	}
+	v1.HandleSuccess(ctx, user)
+}

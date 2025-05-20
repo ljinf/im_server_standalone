@@ -92,10 +92,11 @@ CREATE TABLE `user_conversation_list`
     `last_read_seq`   bigint(20) unsigned DEFAULT 0 COMMENT '此会话用户已读的最后一条消息',
     `notify_type`     int(11) DEFAULT 0 COMMENT '会话收到消息的提醒类型，0未屏蔽，正常提醒 1屏蔽 2强提醒',
     `is_top`          tinyint(2) DEFAULT 0 COMMENT '会话是否被置顶展示 0否 1是',
-    `created_at`      int(11) NOT NULL DEFAULT 0,
-    `updated_at`      int(11) NOT NULL DEFAULT 0,
+    `created_at`      datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`      datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `user_conversation_idx` (`user_id`,`conversation_id`)
+    UNIQUE KEY `user_conversation_idx` (`user_id`,`conversation_id`),
+    KEY               `conversation_user_idx` (`conversation_id`,`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户会话链';
 
 DROP TABLE IF EXISTS `user_msg_list`;
@@ -105,11 +106,11 @@ CREATE TABLE `user_msg_list`
     `user_id`         bigint(20) unsigned NOT NULL COMMENT '用户ID',
     `msg_id`          bigint(20) unsigned NOT NULL COMMENT '消息ID',
     `conversation_id` varchar(64) NOT NULL COMMENT '会话ID',
-    `seq`             bigint(20) unsigned DEFAULT 0 COMMENT '消息在会话中的序列号，用于保证消息的顺序',
-    `created_at`      int(11) NOT NULL DEFAULT '0',
+    `seq`             bigint(20) unsigned DEFAULT 0 COMMENT '消息序列号',
+    `created_at`      datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
-    KEY               `user_conversation_seq_msg_idx` (`user_id`,`conversation_id`,`seq`,`msg_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户消息链';
+    KEY               `user_conversation_seq_msg_idx` (`user_id`,`seq`,`msg_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户消息链(写扩散)';
 
 DROP TABLE IF EXISTS `msg_list`;
 CREATE TABLE `msg_list`
@@ -120,11 +121,13 @@ CREATE TABLE `msg_list`
     `conversation_id` varchar(64) NOT NULL COMMENT '会话ID',
     `content`         text        NOT NULL COMMENT '消息文本',
     `content_type`    int(8) NOT NULL DEFAULT '1' COMMENT '内容类型  1文本  2图片 3音频文件  4音频文件  5实时语音  6实时视频',
-    `status`          int(11) NOT NULL DEFAULT '0' COMMENT '消息状态枚举，0可见 1屏蔽 2撤回',
-    `send_time`       int(11) NOT NULL DEFAULT '0' COMMENT '发送时间',
-    `created_at`      int(11) NOT NULL DEFAULT '0',
+    `seq`             bigint(20) unsigned DEFAULT 0 COMMENT '消息在会话中的序列号，用于保证消息的顺序',
+    `status`          tinyint(2) NOT NULL DEFAULT '0' COMMENT '消息状态枚举，0可见 1屏蔽 2撤回',
+    `sent_at`         bigint(20) NOT NULL COMMENT '发送时间',
+    `created_at`      datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
-    KEY               `msg_idx` (`msg_id`)
+    KEY               `msg_idx` (`msg_id`),
+    KEY               conversation_seq_msg_idx(`conversation_id`,`seq`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息表';
 
 DROP TABLE IF EXISTS `conversation_list`;
@@ -149,10 +152,10 @@ CREATE TABLE `conversation_msg_list`
     `conversation_id` varchar(64) NOT NULL COMMENT '会话ID',
     `msg_id`          bigint(20) unsigned NOT NULL COMMENT '消息ID',
     `seq`             bigint(20) unsigned DEFAULT 0 COMMENT '消息在会话中的序列号，用于保证消息的顺序',
-    `created_at`      int(11) NOT NULL DEFAULT '0',
+    `created_at`      datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
     KEY               conversation_seq_msg_idx(`conversation_id`,`seq`,`msg_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话消息链';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话消息链(读扩散)';
 
 
 

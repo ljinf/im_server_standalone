@@ -13,11 +13,11 @@ import (
 
 type RelationshipService interface {
 	AddApplyFriendship(ctx context.Context, req *v1.ApplyFriendshipRequest) error
-	GetApplyFriendshipList(ctx context.Context, userId int64, page int, pageSize int) (interface{}, error)
+	GetApplyFriendshipList(ctx context.Context, userId string, page int, pageSize int) (interface{}, error)
 	UpdateApplyFriendshipInfo(ctx context.Context, req *v1.ApplyFriendshipRequest) error
 	DelApplyFriendshipInfo(ctx context.Context, req *v1.ApplyFriendshipRequest) error
 
-	GetRelationshipList(ctx context.Context, userId int64, relationshipType, page int, pageSize int) (interface{}, error)
+	GetRelationshipList(ctx context.Context, userId string, relationshipType, page int, pageSize int) (interface{}, error)
 	GetRelationship(ctx context.Context, req *v1.RelationshipRequest) (*model.RelationshipList, error)
 	AddRelationshipFollow(ctx context.Context, req *v1.RelationshipRequest) error
 	UpdateRelationship(ctx context.Context, req *v1.RelationshipRequest) error
@@ -72,7 +72,7 @@ func (r *relationshipService) AddApplyFriendship(ctx context.Context, req *v1.Ap
 	return nil
 }
 
-func (r *relationshipService) GetApplyFriendshipList(ctx context.Context, userId int64, page int, pageSize int) (interface{}, error) {
+func (r *relationshipService) GetApplyFriendshipList(ctx context.Context, userId string, page int, pageSize int) (interface{}, error) {
 	list, err := r.relationRepo.SelectApplyFriendshipList(ctx, userId, page, pageSize)
 	if err != nil {
 		r.logger.Error(err.Error(), zap.Any("userId", userId))
@@ -102,13 +102,19 @@ func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req
 			Status:   req.Status,
 		}
 
-		if err := r.relationRepo.UpdateApplyFriendship(ctx, &applyA); err != nil {
-			r.logger.Error(err.Error(), zap.Any("req", applyA))
-			return v1.ErrInternalServerError
-		}
+		if err := r.tm.Transaction(ctx, func(ctx context.Context) error {
 
-		if err := r.relationRepo.UpdateApplyFriendship(ctx, &applyB); err != nil {
-			r.logger.Error(err.Error(), zap.Any("req", applyB))
+			if err := r.relationRepo.UpdateApplyFriendship(ctx, &applyA); err != nil {
+				r.logger.Error(err.Error(), zap.Any("req", applyA))
+				return err
+			}
+
+			if err := r.relationRepo.UpdateApplyFriendship(ctx, &applyB); err != nil {
+				r.logger.Error(err.Error(), zap.Any("req", applyB))
+				return err
+			}
+			return nil
+		}); err != nil {
 			return v1.ErrInternalServerError
 		}
 
@@ -163,7 +169,7 @@ func (r *relationshipService) DelApplyFriendshipInfo(ctx context.Context, req *v
 }
 
 // 查询列表
-func (r *relationshipService) GetRelationshipList(ctx context.Context, userId int64, relationshipType, page int, pageSize int) (interface{}, error) {
+func (r *relationshipService) GetRelationshipList(ctx context.Context, userId string, relationshipType, page int, pageSize int) (interface{}, error) {
 	list, total, err := r.relationRepo.SelectRelationshipList(ctx, userId, relationshipType, page, pageSize)
 	if err != nil {
 		r.logger.Error(err.Error(), zap.Any("userID", userId))

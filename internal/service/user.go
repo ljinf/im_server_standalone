@@ -15,11 +15,11 @@ type UserService interface {
 	Register(ctx context.Context, req *v1.RegisterRequest) error
 	Login(ctx context.Context, req *v1.LoginRequest) (string, error)
 	// 用户信息
-	GetProfile(ctx context.Context, userId int64) (*v1.GetProfileResponseData, error)
+	GetProfile(ctx context.Context, userId string) (*v1.GetProfileResponseData, error)
 	GetProfileByEmail(ctx context.Context, email string) (*v1.GetProfileResponseData, error)
-	UpdateProfile(ctx context.Context, userId int64, req *v1.UpdateProfileRequest) error
+	UpdateProfile(ctx context.Context, userId string, req *v1.UpdateProfileRequest) error
 	// 更新注册表
-	UpdateRegisterInfo(ctx context.Context, userId int64, req *v1.UpdateRegisterInfoRequest) error
+	UpdateRegisterInfo(ctx context.Context, userId string, req *v1.UpdateRegisterInfoRequest) error
 }
 
 type userService struct {
@@ -59,7 +59,7 @@ func (s *userService) Register(ctx context.Context, req *v1.RegisterRequest) err
 	}
 
 	account := &model.AccountInfo{
-		UserId:   int64(userId),
+		UserId:   fmt.Sprintf("%v", userId),
 		Email:    req.Email,
 		Password: string(hashedPassword),
 	}
@@ -90,7 +90,7 @@ func (s *userService) Login(ctx context.Context, req *v1.LoginRequest) (string, 
 	return token, nil
 }
 
-func (s *userService) UpdateRegisterInfo(ctx context.Context, userId int64, req *v1.UpdateRegisterInfoRequest) error {
+func (s *userService) UpdateRegisterInfo(ctx context.Context, userId string, req *v1.UpdateRegisterInfoRequest) error {
 	info, err := s.userRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
 		return v1.ErrUnauthorized
@@ -123,7 +123,7 @@ func (s *userService) UpdateRegisterInfo(ctx context.Context, userId int64, req 
 	return nil
 }
 
-func (s *userService) GetProfile(ctx context.Context, userId int64) (*v1.GetProfileResponseData, error) {
+func (s *userService) GetProfile(ctx context.Context, userId string) (*v1.GetProfileResponseData, error) {
 	user, err := s.userRepo.GetAccountInfoByID(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -139,7 +139,7 @@ func (s *userService) GetProfile(ctx context.Context, userId int64) (*v1.GetProf
 	}, nil
 }
 
-func (s *userService) UpdateProfile(ctx context.Context, userId int64, req *v1.UpdateProfileRequest) error {
+func (s *userService) UpdateProfile(ctx context.Context, userId string, req *v1.UpdateProfileRequest) error {
 	user, err := s.userRepo.GetByID(ctx, userId)
 	if err != nil {
 		return err

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	v1 "github.com/ljinf/im_server_standalone/api/v1"
 	"github.com/ljinf/im_server_standalone/internal/service"
@@ -33,7 +34,7 @@ func (h *RelationshipHandler) AddApplyFriendship(ctx *gin.Context) {
 		return
 	}
 
-	param.UserId = GetUserIdFromCtx(ctx)
+	param.UserId = fmt.Sprintf("%v", GetUserIdFromCtx(ctx))
 	if err := h.srv.AddApplyFriendship(ctx, &param); err != nil {
 		v1.HandleError(ctx, http.StatusOK, err, nil)
 		return
@@ -44,7 +45,7 @@ func (h *RelationshipHandler) AddApplyFriendship(ctx *gin.Context) {
 // 获取申请列表
 func (h *RelationshipHandler) GetApplyFriendshipList(ctx *gin.Context) {
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}
@@ -61,7 +62,7 @@ func (h *RelationshipHandler) GetApplyFriendshipList(ctx *gin.Context) {
 // 修改申请信息
 func (h *RelationshipHandler) UpdateApplyFriendshipInfo(ctx *gin.Context) {
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}
@@ -73,7 +74,7 @@ func (h *RelationshipHandler) UpdateApplyFriendshipInfo(ctx *gin.Context) {
 		return
 	}
 
-	param.UserId = userId
+	param.UserId = fmt.Sprintf("%v", userId)
 	if err := h.srv.UpdateApplyFriendshipInfo(ctx, &param); err != nil {
 		v1.HandleError(ctx, http.StatusOK, err, nil)
 		return
@@ -81,7 +82,7 @@ func (h *RelationshipHandler) UpdateApplyFriendshipInfo(ctx *gin.Context) {
 
 	if param.Status == contants.ApplyFriendshipStatusApproved {
 		msgReq := &v1.SendMsgReq{
-			UserId:      userId,
+			UserId:      fmt.Sprintf("%v", userId),
 			TargetId:    param.TargetId,
 			Content:     contants.ChatSayHello,
 			ContentType: contants.MsgContentTypeTxt,
@@ -99,7 +100,7 @@ func (h *RelationshipHandler) UpdateApplyFriendshipInfo(ctx *gin.Context) {
 // 删除申请
 func (h *RelationshipHandler) DelApplyFriendshipInfo(ctx *gin.Context) {
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}
@@ -110,7 +111,7 @@ func (h *RelationshipHandler) DelApplyFriendshipInfo(ctx *gin.Context) {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrBadRequest, nil)
 		return
 	}
-	param.UserId = userId
+	param.UserId = fmt.Sprintf("%v", userId)
 	if err := h.srv.DelApplyFriendshipInfo(ctx, &param); err != nil {
 		v1.HandleError(ctx, http.StatusOK, err, nil)
 		return
@@ -121,7 +122,7 @@ func (h *RelationshipHandler) DelApplyFriendshipInfo(ctx *gin.Context) {
 // 获取关系列表
 func (h *RelationshipHandler) GetRelationshipList(ctx *gin.Context) {
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}
@@ -151,7 +152,7 @@ func (h *RelationshipHandler) GetRelationshipList(ctx *gin.Context) {
 // 关注
 func (h *RelationshipHandler) AddRelationshipFollow(ctx *gin.Context) {
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}
@@ -162,7 +163,7 @@ func (h *RelationshipHandler) AddRelationshipFollow(ctx *gin.Context) {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrBadRequest, nil)
 		return
 	}
-	param.UserId = userId
+	param.UserId = fmt.Sprintf("%v", userId)
 	param.RelationshipType = contants.RelationshipTypeFollow
 
 	if err := h.srv.AddRelationshipFollow(ctx, &param); err != nil {
@@ -176,7 +177,7 @@ func (h *RelationshipHandler) AddRelationshipFollow(ctx *gin.Context) {
 func (h *RelationshipHandler) UpdateRelationship(ctx *gin.Context) {
 
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}
@@ -187,7 +188,7 @@ func (h *RelationshipHandler) UpdateRelationship(ctx *gin.Context) {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrBadRequest, nil)
 		return
 	}
-	param.UserId = userId
+	param.UserId = fmt.Sprintf("%v", userId)
 
 	if err := h.srv.UpdateRelationship(ctx, &param); err != nil {
 		h.logger.Error(err.Error(), zap.Any("param", param))
@@ -202,7 +203,7 @@ func (h *RelationshipHandler) UpdateRelationship(ctx *gin.Context) {
 func (h *RelationshipHandler) DelRelationship(ctx *gin.Context) {
 
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}
@@ -214,7 +215,7 @@ func (h *RelationshipHandler) DelRelationship(ctx *gin.Context) {
 		return
 	}
 
-	param.UserId = userId
+	param.UserId = fmt.Sprintf("%v", userId)
 	if err := h.srv.DelRelationship(ctx, &param); err != nil {
 		h.logger.Error(err.Error(), zap.Any("param", param))
 		v1.HandleError(ctx, http.StatusOK, v1.ErrInternalServerError, nil)

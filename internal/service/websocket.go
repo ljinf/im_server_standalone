@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -93,7 +92,7 @@ func (w *websocketService) ProcessMsg(sender int64, payload []byte) {
 }
 
 func (w *websocketService) msgChat(payload []byte) {
-	msgReq, err := parsePayload(payload)
+	/*msgReq, err := parsePayload(payload)
 	if err != nil {
 		w.logger.Error(err.Error(), zap.Any("msgChat", "parsePayload err"))
 		return
@@ -110,7 +109,7 @@ func (w *websocketService) msgChat(payload []byte) {
 		return
 	}
 
-	w.PushMsg(resp, msgResp.UserId, msgReq.TargetId)
+	//w.PushMsg(resp, msgResp.UserId, msgReq.TargetId)*/
 }
 
 func parsePayload(payload []byte) (*v1.SendMsgReq, error) {

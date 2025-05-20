@@ -85,7 +85,7 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 // @Router /user [get]
 func (h *UserHandler) GetProfile(ctx *gin.Context) {
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusUnauthorized, v1.ErrUnauthorized, nil)
 		return
 	}
@@ -141,12 +141,12 @@ func (h *UserHandler) SearchProfile(ctx *gin.Context) {
 	}
 
 	//userId := GetUserIdFromCtx(ctx)
-	//if userId == 0 {
+	//if len(userId) == 0 {
 	//	v1.HandleError(ctx, http.StatusUnauthorized, v1.ErrUnauthorized, nil)
 	//	return
 	//}
 
-	if req.UserId != 0 {
+	if len(req.UserId) != 0 {
 		user, err = h.userService.GetProfile(ctx, req.UserId)
 		if err != nil {
 			v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)

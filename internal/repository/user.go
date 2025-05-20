@@ -18,10 +18,10 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*model.Register, error)
 	GetByPhone(ctx context.Context, phone string) (*model.Register, error)
 
-	GetByID(ctx context.Context, id int64) (*model.UserInfo, error)
+	GetByID(ctx context.Context, id string) (*model.UserInfo, error)
 	UpdateUserInfo(ctx context.Context, req *model.UserInfo) error
 
-	GetAccountInfoByID(ctx context.Context, userId int64) (*model.AccountInfo, error)
+	GetAccountInfoByID(ctx context.Context, userId string) (*model.AccountInfo, error)
 	GetAccountInfoByEmail(ctx context.Context, email string) (*model.AccountInfo, error)
 }
 
@@ -93,7 +93,7 @@ func (r *userRepository) UpdateUserInfo(ctx context.Context, req *model.UserInfo
 	return r.DB(ctx).Where("user_id=?", req.UserId).Updates(req).Error
 }
 
-func (r *userRepository) GetByID(ctx context.Context, userId int64) (*model.UserInfo, error) {
+func (r *userRepository) GetByID(ctx context.Context, userId string) (*model.UserInfo, error) {
 	var user model.UserInfo
 	if err := r.DB(ctx).Where("user_id = ?", userId).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -104,16 +104,16 @@ func (r *userRepository) GetByID(ctx context.Context, userId int64) (*model.User
 	return &user, nil
 }
 
-func (r *userRepository) GetAccountInfoByID(ctx context.Context, userId int64) (*model.AccountInfo, error) {
+func (r *userRepository) GetAccountInfoByID(ctx context.Context, userId string) (*model.AccountInfo, error) {
 
-	infoCache, err := cache.GetAccountInfoCache(r.rdb, userId)
+	/*infoCache, err := cache.GetAccountInfoCache(r.rdb, userId)
 	if err != nil {
 		r.logger.Error(err.Error(), zap.Any("userId", userId))
 	}
 
 	if infoCache != nil {
 		return infoCache, nil
-	}
+	}*/
 
 	var info model.AccountInfo
 	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`gender`,r.`email`,r.`phone` " +
@@ -122,7 +122,7 @@ func (r *userRepository) GetAccountInfoByID(ctx context.Context, userId int64) (
 		return nil, err
 	}
 
-	if err = cache.SetAccountInfoCache(r.rdb, info); err != nil {
+	if err := cache.SetAccountInfoCache(r.rdb, info); err != nil {
 		r.logger.Error(err.Error(), zap.Any("info", info))
 	}
 

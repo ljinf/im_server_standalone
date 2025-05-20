@@ -20,10 +20,10 @@ func NewHandler(
 		jwt:    j,
 	}
 }
-func GetUserIdFromCtx(ctx *gin.Context) int64 {
+func GetUserIdFromCtx(ctx *gin.Context) string {
 	v, exists := ctx.Get("claims")
 	if !exists {
-		return 0
+		return ""
 	}
 	userInfo := v.(*jwt.MyCustomClaims)
 	return userInfo.UserId

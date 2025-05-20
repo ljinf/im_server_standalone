@@ -27,7 +27,7 @@ func NewChatHandler(h *Handler, srv service.ChatService, socket service.Websocke
 func (h *ChatHandler) SendChatMessage(ctx *gin.Context) {
 
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}
@@ -47,7 +47,7 @@ func (h *ChatHandler) SendChatMessage(ctx *gin.Context) {
 	}
 
 	// 转发给target
-	h.socketSrv.SyncPushMsg(msgResp, params.TargetId)
+	//h.socketSrv.SyncPushMsg(msgResp, params.TargetId)
 
 	v1.HandleSuccess(ctx, msgResp)
 }
@@ -55,7 +55,7 @@ func (h *ChatHandler) SendChatMessage(ctx *gin.Context) {
 // 会话列表
 func (h *ChatHandler) GetUserConversationList(ctx *gin.Context) {
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}
@@ -81,7 +81,7 @@ func (h *ChatHandler) GetUserConversationList(ctx *gin.Context) {
 func (h *ChatHandler) GetUserMsgList(ctx *gin.Context) {
 
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}
@@ -107,7 +107,7 @@ func (h *ChatHandler) GetUserMsgList(ctx *gin.Context) {
 func (h *ChatHandler) ReportReadMsgSeq(ctx *gin.Context) {
 
 	userId := GetUserIdFromCtx(ctx)
-	if userId == 0 {
+	if len(userId) == 0 {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
 	}

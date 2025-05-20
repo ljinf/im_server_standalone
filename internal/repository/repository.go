@@ -2,10 +2,8 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"github.com/ljinf/im_server_standalone/pkg/log"
 	"github.com/ljinf/im_server_standalone/pkg/zapgorm2"
-	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -16,7 +14,6 @@ const ctxTxKey = "TxKey"
 
 type Repository struct {
 	db             *gorm.DB
-	rdb            *redis.Client
 	logger         *log.Logger
 	cacheMsgLength int
 	remCount       int
@@ -26,11 +23,9 @@ func NewRepository(
 	conf *viper.Viper,
 	logger *log.Logger,
 	db *gorm.DB,
-	rdb *redis.Client,
 ) *Repository {
 	return &Repository{
 		db:             db,
-		rdb:            rdb,
 		logger:         logger,
 		cacheMsgLength: conf.GetInt("cache_msg.max_length"),
 		remCount:       conf.GetInt("cache_msg.rem_count"),
@@ -91,21 +86,4 @@ func NewDB(conf *viper.Viper, l *log.Logger) *gorm.DB {
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	return db
-}
-func NewRedis(conf *viper.Viper) *redis.Client {
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     conf.GetString("data.redis.addr"),
-		Password: conf.GetString("data.redis.password"),
-		DB:       conf.GetInt("data.redis.db"),
-	})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	_, err := rdb.Ping(ctx).Result()
-	if err != nil {
-		panic(fmt.Sprintf("redis error: %s", err.Error()))
-	}
-
-	return rdb
 }

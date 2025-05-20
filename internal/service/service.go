@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/ljinf/im_server_standalone/internal/cache"
 	"github.com/ljinf/im_server_standalone/internal/repository"
 	"github.com/ljinf/im_server_standalone/pkg/jwt"
 	"github.com/ljinf/im_server_standalone/pkg/log"
@@ -11,10 +12,12 @@ type Service struct {
 	logger *log.Logger
 	sid    *sid.Sid
 	jwt    *jwt.JWT
+	cache  cache.Cache
 	tm     repository.Transaction
 }
 
 func NewService(
+	cache cache.Cache,
 	tm repository.Transaction,
 	logger *log.Logger,
 	sid *sid.Sid,
@@ -25,5 +28,6 @@ func NewService(
 		sid:    sid,
 		jwt:    jwt,
 		tm:     tm,
+		cache:  cache,
 	}
 }

@@ -13,29 +13,31 @@ import (
 type ChatRepository interface {
 	// 会话
 	CreateConversation(ctx context.Context, req *model.ConversationList) error
-	SelectConversation(ctx context.Context, conversationId ...int64) ([]model.ConversationList, error)
+	SelectConversation(ctx context.Context, conversationId ...string) ([]model.ConversationList, error)
 	UpdateConversation(ctx context.Context, req *model.ConversationList) error
 
 	// 消息
 	CreateMsg(ctx context.Context, req *model.MsgList, seq int64) error
 	SelectMsgList(ctx context.Context, msgId ...interface{}) ([]model.MsgResp, error)
+	SelectMsgListByUserId(ctx context.Context, userId string, sentAt int64, limit int) ([]model.MsgList, error)
+	SelectMsgListByConvId(ctx context.Context, convId string, seq, limit int) ([]model.MsgList, error)
 	UpdateMsg(ctx context.Context, req *model.MsgList) error
 
 	// 会话消息
 	CreateConversationMsg(ctx context.Context, req *model.ConversationMsgList) error
 	DecrMsgSeq(ctx context.Context, convId int64)
-	SelectConversationMsg(ctx context.Context, conversationId, seq int64, pageNum, pageSize int) ([]model.MsgResp, error)
-	SelectLastConversationMsg(ctx context.Context, conversationId int64) (*model.MsgResp, error)
+	SelectConversationMsg(ctx context.Context, conversationId string, seq int64, limit int) ([]model.MsgList, error)
+	SelectLastConversationMsg(ctx context.Context, conversationId string) (*model.MsgList, error)
 
 	// 用户消息链
-	CreateUserMsgList(ctx context.Context, req *model.UserMsgList) error
+	CreateUserMsgList(ctx context.Context, req ...*model.UserMsgList) error
 
 	// 用户会话链
 	CreateUserConversationList(ctx context.Context, req ...*model.UserConversationList) error
 	UpdateUserConversationList(ctx context.Context, req *model.UserConversationList) error
 	// 用户会话列表
-	SelectUserConversationList(ctx context.Context, userId, pageNum, pageSize int64) ([]model.UserConversationList, error)
-	SelectConversationUsers(ctx context.Context, conversationId int64) ([]model.UserInfo, error) //会话下的用户列表
+	SelectUserConversationList(ctx context.Context, userId string, pageNum, pageSize int64) ([]model.UserConversationList, error)
+	SelectConversationUsers(ctx context.Context, conversationId string) ([]model.UserInfo, error) //会话下的用户列表
 }
 
 type chatRepository struct {
@@ -52,34 +54,14 @@ func (r *chatRepository) CreateConversation(ctx context.Context, req *model.Conv
 	if err := r.DB(ctx).Create(req).Error; err != nil {
 		return err
 	}
-	if err := cache.SetConversationCache(r.rdb, req); err != nil {
-		r.logger.Error(err.Error(), zap.Any("ConversationList", req))
-	}
 	return nil
 }
 
-func (r *chatRepository) SelectConversation(ctx context.Context, conversationId ...int64) ([]model.ConversationList, error) {
-	var (
-		list = make([]model.ConversationList, 0, len(conversationId))
-	)
+func (r *chatRepository) SelectConversation(ctx context.Context, conversationId ...string) ([]model.ConversationList, error) {
+	list := make([]model.ConversationList, 0, len(conversationId))
 
-	conversationLists, err := cache.GetConversationCache(r.rdb, conversationId...)
-	if err != nil {
-		r.logger.Error(err.Error())
-	}
-
-	if len(conversationLists) > 0 {
-		return conversationLists, nil
-	}
-
-	if err = r.DB(ctx).Where("conversation_id in ?", conversationId).Find(&list).Error; err != nil {
+	if err := r.DB(ctx).Where("conversation_id in ?", conversationId).Find(&list).Error; err != nil {
 		return nil, err
-	}
-
-	for _, v := range list {
-		if err = cache.SetConversationCache(r.rdb, &v); err != nil {
-			r.logger.Error(err.Error(), zap.Any("SetConversationCache", v))
-		}
 	}
 
 	return list, nil
@@ -95,7 +77,7 @@ func (r *chatRepository) CreateMsg(ctx context.Context, req *model.MsgList, seq 
 		return err
 	}
 
-	cacheInfo := &model.MsgResp{
+	/*cacheInfo := &model.MsgResp{
 		Id:             req.Id,
 		UserId:         req.UserId,
 		MsgId:          req.MsgId,
@@ -127,7 +109,7 @@ func (r *chatRepository) CreateMsg(ctx context.Context, req *model.MsgList, seq 
 				r.logger.Error(err.Error(), zap.Any("AddConversationMsgCache", cacheInfo))
 			}
 		}
-	}
+	}*/
 	return nil
 }
 
@@ -136,37 +118,55 @@ func (r *chatRepository) SelectMsgList(ctx context.Context, msgId ...interface{}
 		list []model.MsgResp
 	)
 
-	msgCache, err := cache.GetMsgCache(r.rdb, msgId...)
+	/*msgCache, err := cache.GetMsgCache(r.rdb, msgId...)
 	if err != nil {
 		r.logger.Error(err.Error(), zap.Any("msgids", msgId))
 	}
 
 	if len(msgCache) > 0 && len(msgCache) < len(msgId) {
 		return msgCache, nil
-	}
+	}*/
 
 	//SELECT m.`msg_id`,m.`user_id`,m.`conversation_id`,m.`content`,m.`content_type`,m.`send_time`,m.`status`,cm.`seq`
 	//FROM `msg_list` m INNER JOIN `conversation_msg_list` cm ON cm.`conversation_id`=m.`conversation_id WHERE m.`msg_id` IN ()
-	if err = r.DB(ctx).Table("`msg_list` m").Select("m.`msg_id`,m.`user_id`,m.`conversation_id`,m.`content`,m.`content_type`,m.`send_time`,m.`status`,cm.`seq`").
-		Joins("INNER JOIN `conversation_msg_list` cm on ON cm.`conversation_id`=m.`conversation_id").Where("m.`msg_id` IN ?", msgId).Find(&list).Error; err != nil {
+	if err := r.DB(ctx).Table("`msg_list` m").Select("m.`msg_id`,m.`user_id`,m.`conversation_id`,m.`content`,m.`content_type`,"+
+		"m.`send_time`,m.`status`,cm.`seq`").
+		Joins("INNER JOIN `conversation_msg_list` cm on ON cm.`conversation_id`=m.`conversation_id").
+		Where("m.`msg_id` IN ?", msgId).Find(&list).Error; err != nil {
 		return nil, err
 	}
 
-	if err = cache.SetMsgCache(r.rdb, nil); err != nil {
+	if err := cache.SetMsgCache(r.rdb, nil); err != nil {
 		r.logger.Error(fmt.Sprintf("SetMsgCache %v", err))
 	}
 
 	return list, nil
 }
 
-func (r *chatRepository) UpdateMsg(ctx context.Context, req *model.MsgList) error {
-	return r.DB(ctx).Where("msg_id=?", req.MsgId).Updates(req).Error
+func (r *chatRepository) SelectMsgListByUserId(ctx context.Context, userId string, sentAt int64, limit int) ([]model.MsgList, error) {
+	var list []model.MsgList
+
+	querySql := "SELECT m.`id`,m.`user_id`,m.`msg_id`,m.`conversation_id`,m.`content`,m.`content_type`,m.`seq`,m.`status`,m.`sent_at` " +
+		"FROM `msg_list` m WHERE m.`user_id`=? AND m.`sent_at`>? ORDER BY m.`sent_at` ASC LIMIT ?"
+	err := r.DB(ctx).Raw(querySql, userId, sentAt, limit).Find(&list).Error
+	return list, err
 }
 
-// 创建会话消息，并生成一个消息序列号
+func (r *chatRepository) SelectMsgListByConvId(ctx context.Context, convId string, seq, limit int) ([]model.MsgList, error) {
+	var list []model.MsgList
+
+	querySql := "SELECT m.`id`,m.`user_id`,m.`msg_id`,m.`conversation_id`,m.`content`,m.`content_type`,m.`seq`,m.`status`,m.`sent_at` " +
+		"FROM `msg_list` m WHERE m.`conversation_id`=? AND m.`seq`>? ORDER BY m.`seq` ASC LIMIT ?"
+	err := r.DB(ctx).Raw(querySql, convId, seq, limit).Find(&list).Error
+	return list, err
+}
+
+func (r *chatRepository) UpdateMsg(ctx context.Context, req *model.MsgList) error {
+	return r.DB(ctx).Table(req.TableName()).Where("msg_id=?", req.MsgId).Update("status", req.Status).Error
+}
+
+// 创建会话消息
 func (r *chatRepository) CreateConversationMsg(ctx context.Context, req *model.ConversationMsgList) error {
-	msgSeq := cache.IncrConversationMsg(r.rdb, req.ConversationId)
-	req.Seq = msgSeq
 	return r.DB(ctx).Create(req).Error
 }
 
@@ -175,26 +175,17 @@ func (r *chatRepository) DecrMsgSeq(ctx context.Context, convId int64) {
 	cache.DecrConversationMsg(r.rdb, convId)
 }
 
-func (r *chatRepository) SelectConversationMsg(ctx context.Context, conversationId, seq int64, pageNum, pageSize int) ([]model.MsgResp, error) {
+func (r *chatRepository) SelectConversationMsg(ctx context.Context, conversationId string, seq int64, limit int) ([]model.MsgList, error) {
 
-	msgList, err := cache.GetConversationMsgList(r.rdb, conversationId, seq, int64(pageNum), int64(pageSize))
-	if err != nil {
-		r.logger.Error(err.Error(), zap.Any("conversationId", conversationId))
-	}
+	var list []model.MsgList
 
-	if len(msgList) >= pageSize {
-		return msgList, nil
-	}
-
-	var list []model.MsgResp
-
-	querySql := "SELECT cml.`seq`,ml.* FROM `conversation_msg_list` cml LEFT JOIN `msg_list` ml ON cml.`msg_id`=ml.`msg_id` " +
-		"WHERE cml.`conversation_id`=? AND cml.`seq`>? ORDER BY cml.seq DESC LIMIT ?"
-	err = r.DB(ctx).Raw(querySql, conversationId, seq, pageSize).Scan(&list).Error
+	querySql := "SELECT m.`id`,m.`user_id`,m.`msg_id`,m.`conversation_id`,m.`content`,m.`content_type`,m.`seq`,m.`status`,m.`sent_at` " +
+		"FROM `msg_list` m WHERE m.`conversation_id`=? AND m.`seq`>? ORDER BY m.`seq` ASC LIMIT ?"
+	err := r.DB(ctx).Raw(querySql, conversationId, seq, limit).Find(&list).Error
 	return list, err
 }
 
-func (r *chatRepository) CreateUserMsgList(ctx context.Context, req *model.UserMsgList) error {
+func (r *chatRepository) CreateUserMsgList(ctx context.Context, req ...*model.UserMsgList) error {
 	return r.DB(ctx).Create(req).Error
 }
 
@@ -220,7 +211,7 @@ func (r *chatRepository) UpdateUserConversationList(ctx context.Context, req *mo
 		return err
 	}
 
-	if userConversationCache, err := cache.GetUserConversationCache(r.rdb, req.UserId, req.ConversationId); err != nil {
+	/*if userConversationCache, err := cache.GetUserConversationCache(r.rdb, req.UserId, req.ConversationId); err != nil {
 		r.logger.Error(err.Error(), zap.Any("uid", req.UserId), zap.Any("convId", req.ConversationId))
 	} else {
 		userConversationCache.UserId = req.UserId
@@ -238,23 +229,24 @@ func (r *chatRepository) UpdateUserConversationList(ctx context.Context, req *mo
 		if err = cache.SetUserConversationCache(r.rdb, *userConversationCache); err != nil {
 			r.logger.Error(err.Error())
 		}
-	}
+	}*/
 	return nil
 }
 
 // 获取用户会话链信息
-func (r *chatRepository) SelectUserConversationList(ctx context.Context, userId, pageNum, pageSize int64) ([]model.UserConversationList, error) {
+func (r *chatRepository) SelectUserConversationList(ctx context.Context, userId string, pageNum, pageSize int64) ([]model.UserConversationList, error) {
 
-	list, err := cache.GetUserConversationListCache(r.rdb, userId, pageNum, pageSize)
+	/*list, err := cache.GetUserConversationListCache(r.rdb, userId, pageNum, pageSize)
 	if err != nil {
 		r.logger.Error(err.Error(), zap.Any("uid", userId))
 	}
 
 	if len(list) > 0 {
 		return list, nil
-	}
+	}*/
 
-	err = r.DB(ctx).Where("user_id=?", userId).Limit(int(pageSize)).Offset(int((pageNum - 1) * pageSize)).Find(&list).Error
+	var list []model.UserConversationList
+	err := r.DB(ctx).Where("user_id=?", userId).Limit(int(pageSize)).Offset(int((pageNum - 1) * pageSize)).Find(&list).Error
 	if len(list) > 0 {
 		if err = cache.SetUserConversationCache(r.rdb, list...); err != nil {
 			r.logger.Error(err.Error())
@@ -265,9 +257,9 @@ func (r *chatRepository) SelectUserConversationList(ctx context.Context, userId,
 }
 
 // 会话下的所有用户
-func (r *chatRepository) SelectConversationUsers(ctx context.Context, conversationId int64) ([]model.UserInfo, error) {
+func (r *chatRepository) SelectConversationUsers(ctx context.Context, conversationId string) ([]model.UserInfo, error) {
 
-	userInfoList, err := cache.GetConversationUserListCache(r.rdb, conversationId)
+	/*userInfoList, err := cache.GetConversationUserListCache(r.rdb, conversationId)
 	if err != nil {
 		r.logger.Error(err.Error(), zap.Any("conversationId", conversationId))
 	}
@@ -275,26 +267,26 @@ func (r *chatRepository) SelectConversationUsers(ctx context.Context, conversati
 	if len(userInfoList) > 0 {
 		return userInfoList, nil
 	}
-
+	*/
 	var info []model.AccountInfo
 	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`gender`,u.`status`,r.`email`,r.`phone` " +
 		"FROM `user_info` u INNER JOIN `register` r ON u.`user_id`=r.`user_id` " +
 		"WHERE u.`user_id` IN (SELECT uc.`user_id` FROM `user_conversation_list` uc WHERE uc.`conversation_id`=?)"
-	if err = r.DB(ctx).Raw(querySql, conversationId).Scan(&info).Error; err != nil {
+	if err := r.DB(ctx).Raw(querySql, conversationId).Scan(&info).Error; err != nil {
 		return nil, err
 	}
 
-	if err = cache.SetAccountInfoCache(r.rdb, info...); err != nil {
+	if err := cache.SetAccountInfoCache(r.rdb, info...); err != nil {
 		r.logger.Error(err.Error(), zap.Any("SetAccountInfoCache", info))
 	} else {
-		uids := make([]int64, 0, len(info))
+		uids := make([]string, 0, len(info))
 		for _, v := range info {
 			uids = append(uids, v.UserId)
 		}
-		if err = cache.AddConversationUserListCache(r.rdb, conversationId, uids...); err != nil {
+		/*if err = cache.AddConversationUserListCache(r.rdb, conversationId, uids...); err != nil {
 			r.logger.Error(err.Error(), zap.Any("convId", conversationId),
 				zap.Any("AddConversationUserListCache", uids))
-		}
+		}*/
 	}
 
 	resp := make([]model.UserInfo, 0, len(info))
@@ -312,26 +304,17 @@ func (r *chatRepository) SelectConversationUsers(ctx context.Context, conversati
 }
 
 // 会话最新一条消息
-func (r *chatRepository) SelectLastConversationMsg(ctx context.Context, conversationId int64) (*model.MsgResp, error) {
+func (r *chatRepository) SelectLastConversationMsg(ctx context.Context, conversationId string) (*model.MsgList, error) {
 
-	if newestMsg, err := cache.GetConversationNewestMsg(r.rdb, conversationId); err != nil {
-		r.logger.Error(err.Error(), zap.Any("GetConversationNewestMsg convId", conversationId))
-	} else {
-		return newestMsg, nil
-	}
+	var list []model.MsgList
 
-	//没有则从数据库加载一批最新的消息
-	var list []model.MsgResp
-	querySql := "SELECT cml.`seq`,ml.* FROM `conversation_msg_list` cml INNER JOIN `msg_list` ml ON cml.`msg_id`=ml.`msg_id` " +
-		"WHERE cml.`conversation_id`=? ORDER BY cml.seq DESC LIMIT ? "
-	if err := r.DB(ctx).Raw(querySql, conversationId, r.cacheMsgLength).Scan(&list).Error; err != nil {
+	querySql := "SELECT m.`id`,m.`user_id`,m.`msg_id`,m.`conversation_id`,m.`content`,m.`content_type`,m.`seq`,m.`status`,m.`sent_at` " +
+		"FROM `msg_list` m WHERE m.`conversation_id`=? ORDER BY m.`seq` DESC LIMIT 1"
+	if err := r.DB(ctx).Raw(querySql, conversationId).Find(&list).Error; err != nil {
 		return nil, err
 	}
 
 	if len(list) > 0 {
-		if err := cache.AddConversationMsgCache(r.rdb, list...); err != nil {
-			r.logger.Error(err.Error())
-		}
 		return &list[0], nil
 	}
 	return nil, errors.New("ConversationNewestMsg Not Found")

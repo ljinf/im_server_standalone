@@ -1,18 +1,18 @@
 package v1
 
 type SendMsgReq struct {
-	ConversationId int64  `json:"conversation_id" binding:"required" example:"123456"` //会话ID
-	UserId         int64  `json:"user_id"`                                             //发送者ID
-	TargetId       int64  `json:"target_id" binding:"required" example:"123456"`       //接收者ID
+	ConversationId string `json:"conversation_id" binding:"required" example:"123456"` //会话ID
+	UserId         string `json:"user_id"`                                             //发送者ID
+	TargetId       string `json:"target_id" binding:"required" example:"123456"`       //接收者ID
 	Content        string `json:"content" binding:"required"`                          //消息文本
 	ContentType    int    `json:"content_type" binding:"required"`                     //内容类型
 	SendTime       int64  `json:"send_time"`                                           //发送时间
 }
 
 type SendMsgResp struct {
-	UserId         int64  `json:"user_id"`         //发送者ID
-	MsgId          int64  `json:"msg_id"`          //消息ID
-	ConversationId int64  `json:"conversation_id"` //会话ID
+	UserId         string `json:"user_id"`         //发送者ID
+	MsgId          string `json:"msg_id"`          //消息ID
+	ConversationId string `json:"conversation_id"` //会话ID
 	Content        string `json:"content"`         //消息文本
 	ContentType    int    `json:"content_type"`    //内容类型  1文本  2图片 3音频文件  4音频文件  5实时语音  6实时视频
 	Status         int    `json:"status"`          //消息状态枚举，0可见 1屏蔽 2撤回
@@ -22,7 +22,7 @@ type SendMsgResp struct {
 }
 
 type ConversationResp struct {
-	ConversationId int64  `json:"conversation_id"` //会话ID
+	ConversationId string `json:"conversation_id"` //会话ID
 	Type           int    `json:"type"`            //会话类型枚举，0单聊 1群聊
 	Avatar         string `json:"avatar"`          //会话头像
 	LastReadSeq    int64  `json:"last_read_seq"`   //此会话用户已读的最后一条消息
@@ -34,21 +34,21 @@ type ConversationResp struct {
 }
 
 type HistoryMsgListReq struct {
-	UserId         int64 `json:"user_id"`                                             //用户ID
-	ConversationId int64 `json:"conversation_id" binding:"required" example:"123456"` //会话ID
-	Seq            int64 `json:"seq"`                                                 //消息序列号
-	PageNum        int   `json:"page_num"`
-	PageSize       int   `json:"page_size"`
+	UserId         string `json:"user_id"`                                             //用户ID
+	ConversationId string `json:"conversation_id" binding:"required" example:"123456"` //会话ID
+	Seq            int64  `json:"seq"`                                                 //消息序列号
+	PageNum        int    `json:"page_num"`
+	PageSize       int    `json:"page_size"`
 }
 
 type ReportReadReq struct {
-	UserId         int64 `json:"user_id"`                                             //用户ID
-	ConversationId int64 `json:"conversation_id" binding:"required" example:"123456"` //会话ID
-	Seq            int64 `json:"seq"`                                                 //消息序列号
+	UserId         string `json:"user_id"`                                             //用户ID
+	ConversationId string `json:"conversation_id" binding:"required" example:"123456"` //会话ID
+	Seq            int64  `json:"seq"`                                                 //消息序列号
 }
 
 type ConversationMsgListReq struct {
-	UserId   int64 `json:"user_id"` //用户ID
-	PageNum  int   `json:"page_num" binding:"required" example:"1"`
-	PageSize int   `json:"page_size" binding:"required" example:"10"`
+	UserId   string `json:"user_id"` //用户ID
+	PageNum  int    `json:"page_num" binding:"required" example:"1"`
+	PageSize int    `json:"page_size" binding:"required" example:"10"`
 }

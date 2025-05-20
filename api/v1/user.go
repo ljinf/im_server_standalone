@@ -29,7 +29,7 @@ type UpdateProfileRequest struct {
 	Gender   int    `json:"gender"`    //性别
 }
 type GetProfileResponseData struct {
-	UserId   int64  `json:"user_id"`
+	UserId   string `json:"user_id"`
 	Phone    string `json:"phone"`
 	Email    string `json:"email"`
 	NickName string `json:"nick_name"` //昵称
@@ -42,6 +42,6 @@ type GetProfileResponse struct {
 }
 
 type SearchUserRequest struct {
-	UserId int64  `json:"user_id"`
+	UserId string `json:"user_id"`
 	Email  string `json:"email"`
 }

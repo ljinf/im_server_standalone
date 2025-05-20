@@ -99,7 +99,7 @@ func SetConversationCache(rdb *redis.Client, conv *model.ConversationList) error
 	return rdb.Set(ctx, key, string(convData), time.Duration(rand.Intn(randTime)+ConversationExpire)*time.Second).Err()
 }
 
-func GetConversationCache(rdb *redis.Client, convIds ...int64) ([]model.ConversationList, error) {
+func GetConversationCache(rdb *redis.Client, convIds ...string) ([]model.ConversationList, error) {
 	var (
 		length   = len(convIds)
 		convList = make([]model.ConversationList, 0, length)
@@ -133,7 +133,7 @@ func GetConversationCache(rdb *redis.Client, convIds ...int64) ([]model.Conversa
 
 // 用户的会话设置  zset类型
 func SetUserConversationCache(rdb *redis.Client, info ...model.UserConversationList) error {
-	if len(info) > 0 {
+	/*if len(info) > 0 {
 		list := make([]redis.Z, 0, len(info))
 		key := fmt.Sprintf("%v%v", UserConversationInfoPrefix, info[0].UserId)
 		for _, v := range info {
@@ -142,7 +142,7 @@ func SetUserConversationCache(rdb *redis.Client, info ...model.UserConversationL
 				return err
 			}
 			list = append(list, redis.Z{
-				Score:  float64(v.ConversationId),
+				Score:  v.ConversationId,
 				Member: string(data),
 			})
 		}
@@ -150,7 +150,7 @@ func SetUserConversationCache(rdb *redis.Client, info ...model.UserConversationL
 			return err
 		}
 		return rdb.Expire(ctx, key, time.Duration(rand.Intn(randTime)+userConversationExpire)).Err()
-	}
+	}*/
 	return nil
 }
 

@@ -8,7 +8,7 @@ import (
 // 注册表
 type Register struct {
 	Id        int64          `json:"id" gorm:"primarykey"`
-	UserId    int64          `json:"user_id"`
+	UserId    string         `json:"user_id"`
 	Phone     string         `json:"phone"`
 	Email     string         `json:"email"`
 	Password  string         `json:"password"`
@@ -24,7 +24,7 @@ func (r *Register) TableName() string {
 // 用户信息表
 type UserInfo struct {
 	Id        int64          `json:"id" gorm:"primarykey"`
-	UserId    int64          `json:"user_id"`
+	UserId    string         `json:"user_id"`
 	NickName  string         `json:"nick_name"` //昵称
 	Avatar    string         `json:"avatar"`    //头像
 	Gender    int            `json:"gender"`    //性别
@@ -39,7 +39,7 @@ func (u *UserInfo) TableName() string {
 }
 
 type AccountInfo struct {
-	UserId   int64  `json:"user_id"`
+	UserId   string `json:"user_id"`
 	Phone    string `json:"phone"`
 	Email    string `json:"email"`
 	NickName string `json:"nick_name"` //昵称

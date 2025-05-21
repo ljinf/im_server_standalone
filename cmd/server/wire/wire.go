@@ -5,6 +5,7 @@ package wire
 
 import (
 	"github.com/google/wire"
+	"github.com/ljinf/im_server_standalone/internal/cache"
 	"github.com/ljinf/im_server_standalone/internal/handler"
 	"github.com/ljinf/im_server_standalone/internal/repository"
 	"github.com/ljinf/im_server_standalone/internal/server"
@@ -21,7 +22,8 @@ import (
 
 var repositorySet = wire.NewSet(
 	repository.NewDB,
-	repository.NewRedis,
+	cache.NewRedis,
+	cache.NewCache,
 	repository.NewRepository,
 	repository.NewTransaction,
 	repository.NewUserRepository,

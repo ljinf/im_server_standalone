@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/redis/go-redis/v9"
+	"github.com/spf13/viper"
 	"time"
 )
 
@@ -24,24 +25,17 @@ func NewCache(r *redis.Client) *Cache {
 	}
 }
 
-func NewRedis(addr string, opts ...RedisOption) *redis.Client {
+func (c *Cache) Redis(ctx context.Context) *redis.Client {
+	return c.rdb
+}
 
-	conf := &redisConf{
-		pwd:          DefaultRedisPwd,
-		db:           DefaultRedisDB,
-		readTimeout:  DefaultRedisReadTimeout,
-		writeTimeout: DefaultRedisWriteTimeout,
-	}
-	for _, v := range opts {
-		v(conf)
-	}
-
+func NewRedis(conf *viper.Viper) *redis.Client {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:         addr,
-		Password:     conf.pwd,
-		DB:           conf.db,
-		ReadTimeout:  time.Duration(conf.readTimeout) * time.Millisecond,
-		WriteTimeout: time.Duration(conf.writeTimeout) * time.Millisecond,
+		Addr:         conf.GetString("data.redis.addr"),
+		Password:     conf.GetString("data.redis.password"),
+		DB:           conf.GetInt("data.redis.db"),
+		ReadTimeout:  time.Duration(conf.GetInt("data.redis.read_timeout")) * time.Millisecond,
+		WriteTimeout: time.Duration(conf.GetInt("data.redis.write_timeout")) * time.Millisecond,
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

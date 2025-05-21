@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	v1 "github.com/ljinf/im_server_standalone/api/v1"
-	"github.com/ljinf/im_server_standalone/internal/cache"
 	"github.com/ljinf/im_server_standalone/internal/model"
-	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"time"
 )
@@ -122,9 +120,9 @@ func (r *userRepository) GetAccountInfoByID(ctx context.Context, userId string) 
 		return nil, err
 	}
 
-	if err := cache.SetAccountInfoCache(r.rdb, info); err != nil {
+	/*if err := cache.SetAccountInfoCache(r.rdb, info); err != nil {
 		r.logger.Error(err.Error(), zap.Any("info", info))
-	}
+	}*/
 
 	return &info, nil
 }

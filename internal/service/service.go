@@ -12,12 +12,12 @@ type Service struct {
 	logger *log.Logger
 	sid    *sid.Sid
 	jwt    *jwt.JWT
-	cache  cache.Cache
+	cache  *cache.Cache
 	tm     repository.Transaction
 }
 
 func NewService(
-	cache cache.Cache,
+	cache *cache.Cache,
 	tm repository.Transaction,
 	logger *log.Logger,
 	sid *sid.Sid,

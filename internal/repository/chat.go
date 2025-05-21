@@ -3,10 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
-	"github.com/ljinf/im_server_standalone/internal/cache"
 	"github.com/ljinf/im_server_standalone/internal/model"
-	"go.uber.org/zap"
 	"gorm.io/gorm/clause"
 )
 
@@ -17,7 +14,7 @@ type ChatRepository interface {
 	UpdateConversation(ctx context.Context, req *model.ConversationList) error
 
 	// 消息
-	CreateMsg(ctx context.Context, req *model.MsgList, seq int64) error
+	CreateMsg(ctx context.Context, req *model.MsgList) error
 	SelectMsgList(ctx context.Context, msgId ...interface{}) ([]model.MsgResp, error)
 	SelectMsgListByUserId(ctx context.Context, userId string, sentAt int64, limit int) ([]model.MsgList, error)
 	SelectMsgListByConvId(ctx context.Context, convId string, seq, limit int) ([]model.MsgList, error)
@@ -51,7 +48,7 @@ func NewChatRepository(r *Repository) ChatRepository {
 }
 
 func (r *chatRepository) CreateConversation(ctx context.Context, req *model.ConversationList) error {
-	if err := r.DB(ctx).Create(req).Error; err != nil {
+	if err := r.DB(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(req).Error; err != nil {
 		return err
 	}
 	return nil
@@ -72,7 +69,7 @@ func (r *chatRepository) UpdateConversation(ctx context.Context, req *model.Conv
 	return r.DB(ctx).Where("conversation_id=?", req.ConversationId).Updates(req).Error
 }
 
-func (r *chatRepository) CreateMsg(ctx context.Context, req *model.MsgList, seq int64) error {
+func (r *chatRepository) CreateMsg(ctx context.Context, req *model.MsgList) error {
 	if err := r.DB(ctx).Create(req).Error; err != nil {
 		return err
 	}
@@ -136,9 +133,9 @@ func (r *chatRepository) SelectMsgList(ctx context.Context, msgId ...interface{}
 		return nil, err
 	}
 
-	if err := cache.SetMsgCache(r.rdb, nil); err != nil {
+	/*if err := cache.SetMsgCache(r.rdb, nil); err != nil {
 		r.logger.Error(fmt.Sprintf("SetMsgCache %v", err))
-	}
+	}*/
 
 	return list, nil
 }
@@ -172,7 +169,7 @@ func (r *chatRepository) CreateConversationMsg(ctx context.Context, req *model.C
 
 // 如果数据库回滚，序号也要回滚
 func (r *chatRepository) DecrMsgSeq(ctx context.Context, convId int64) {
-	cache.DecrConversationMsg(r.rdb, convId)
+	//cache.DecrConversationMsg(r.rdb, convId)
 }
 
 func (r *chatRepository) SelectConversationMsg(ctx context.Context, conversationId string, seq int64, limit int) ([]model.MsgList, error) {
@@ -197,11 +194,11 @@ func (r *chatRepository) CreateUserConversationList(ctx context.Context, req ...
 		return err
 	}
 
-	for _, v := range req {
+	/*for _, v := range req {
 		if err := cache.SetUserConversationCache(r.rdb, *v); err != nil {
 			r.logger.Error(err.Error(), zap.Any("SetUserConversationCache", req))
 		}
-	}
+	}*/
 	return nil
 }
 
@@ -247,11 +244,11 @@ func (r *chatRepository) SelectUserConversationList(ctx context.Context, userId 
 
 	var list []model.UserConversationList
 	err := r.DB(ctx).Where("user_id=?", userId).Limit(int(pageSize)).Offset(int((pageNum - 1) * pageSize)).Find(&list).Error
-	if len(list) > 0 {
+	/*if len(list) > 0 {
 		if err = cache.SetUserConversationCache(r.rdb, list...); err != nil {
 			r.logger.Error(err.Error())
 		}
-	}
+	}*/
 
 	return list, err
 }
@@ -276,18 +273,18 @@ func (r *chatRepository) SelectConversationUsers(ctx context.Context, conversati
 		return nil, err
 	}
 
-	if err := cache.SetAccountInfoCache(r.rdb, info...); err != nil {
+	/*if err := cache.SetAccountInfoCache(r.rdb, info...); err != nil {
 		r.logger.Error(err.Error(), zap.Any("SetAccountInfoCache", info))
 	} else {
 		uids := make([]string, 0, len(info))
 		for _, v := range info {
 			uids = append(uids, v.UserId)
 		}
-		/*if err = cache.AddConversationUserListCache(r.rdb, conversationId, uids...); err != nil {
+		if err = cache.AddConversationUserListCache(r.rdb, conversationId, uids...); err != nil {
 			r.logger.Error(err.Error(), zap.Any("convId", conversationId),
 				zap.Any("AddConversationUserListCache", uids))
-		}*/
-	}
+		}
+	}*/
 
 	resp := make([]model.UserInfo, 0, len(info))
 	for _, v := range info {

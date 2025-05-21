@@ -14,8 +14,10 @@ import (
 var (
 	randTime = 172800 //2 day
 
-	//会话中的消息序列号
+	//会话消息序列号
 	IncrConversationMsgPrefix = cachePrefix + "conversationmsg:seq:"
+	//用户消息序列号
+	IncrUserMsgPrefix = cachePrefix + "usermsg:seq:"
 
 	// 会话
 	ConversationInfoPrefix = cachePrefix + "conversation:info:"
@@ -34,15 +36,27 @@ var (
 	MsgExpire          = 604800 //7天
 )
 
-// 加1
-func IncrConversationMsg(rdb *redis.Client, conversationId int64) int64 {
+// 会话消息序列号
+func IncrConversationMsg(rdb *redis.Client, conversationId string) int64 {
 	key := fmt.Sprintf("%v%v", IncrConversationMsgPrefix, conversationId)
 	return rdb.Incr(ctx, key).Val()
 }
 
 // 减1
-func DecrConversationMsg(rdb *redis.Client, conversationId int64) {
+func DecrConversationMsg(rdb *redis.Client, conversationId string) {
 	key := fmt.Sprintf("%v%v", IncrConversationMsgPrefix, conversationId)
+	rdb.IncrBy(ctx, key, -1)
+}
+
+// 用户消息序列号
+func IncrUserMsg(rdb *redis.Client, userId string) int64 {
+	key := fmt.Sprintf("%v%v", IncrUserMsgPrefix, userId)
+	return rdb.Incr(ctx, key).Val()
+}
+
+// 减1
+func DecrUserMsg(rdb *redis.Client, userId string) {
+	key := fmt.Sprintf("%v%v", IncrUserMsgPrefix, userId)
 	rdb.IncrBy(ctx, key, -1)
 }
 

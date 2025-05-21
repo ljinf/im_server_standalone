@@ -126,7 +126,7 @@ CREATE TABLE `msg_list`
     `sent_at`         bigint(20) NOT NULL COMMENT '发送时间',
     `created_at`      datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
-    KEY               `msg_idx` (`msg_id`),
+    UNIQUE KEY `msg_idx` (`msg_id`),
     KEY               conversation_seq_msg_idx(`conversation_id`,`seq`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息表';
 
@@ -142,7 +142,7 @@ CREATE TABLE `conversation_list`
     `recent_msg_time` int(11) NOT NULL DEFAULT '0' COMMENT '此会话最新产生消息的时间',
     `created_at`      int(11) NOT NULL DEFAULT '0',
     PRIMARY KEY (`id`),
-    KEY               conversation_idx(`conversation_id`)
+    UNIQUE KEY conversation_idx(`conversation_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话表';
 
 DROP TABLE IF EXISTS `conversation_msg_list`;

@@ -8,6 +8,7 @@ package wire
 
 import (
 	"github.com/google/wire"
+	"github.com/ljinf/im_server_standalone/internal/cache"
 	"github.com/ljinf/im_server_standalone/internal/handler"
 	"github.com/ljinf/im_server_standalone/internal/repository"
 	"github.com/ljinf/im_server_standalone/internal/server"
@@ -27,12 +28,13 @@ import (
 func NewWire(viperViper *viper.Viper, logger *log.Logger, pool *ants.Pool) (*app.App, func(), error) {
 	jwtJWT := jwt.NewJwt(viperViper)
 	handlerHandler := handler.NewHandler(logger, jwtJWT)
+	client := cache.NewRedis(viperViper)
+	cacheCache := cache.NewCache(client)
 	db := repository.NewDB(viperViper, logger)
-	client := repository.NewRedis(viperViper)
-	repositoryRepository := repository.NewRepository(viperViper, logger, db, client)
+	repositoryRepository := repository.NewRepository(viperViper, logger, db)
 	transaction := repository.NewTransaction(repositoryRepository)
 	sidSid := sid.NewSid()
-	serviceService := service.NewService(transaction, logger, sidSid, jwtJWT)
+	serviceService := service.NewService(cacheCache, transaction, logger, sidSid, jwtJWT)
 	userRepository := repository.NewUserRepository(repositoryRepository)
 	userService := service.NewUserService(serviceService, userRepository)
 	userHandler := handler.NewUserHandler(handlerHandler, userService)
@@ -54,7 +56,7 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger, pool *ants.Pool) (*app
 
 // wire.go:
 
-var repositorySet = wire.NewSet(repository.NewDB, repository.NewRedis, repository.NewRepository, repository.NewTransaction, repository.NewUserRepository, repository.NewRelationshipRepository, repository.NewChatRepository)
+var repositorySet = wire.NewSet(repository.NewDB, cache.NewRedis, cache.NewCache, repository.NewRepository, repository.NewTransaction, repository.NewUserRepository, repository.NewRelationshipRepository, repository.NewChatRepository)
 
 var serviceSet = wire.NewSet(service.NewService, service.NewUserService, service.NewWebsocketService, service.NewRelationshipService, service.NewChatService)
 

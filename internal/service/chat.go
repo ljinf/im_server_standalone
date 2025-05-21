@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/duke-git/lancet/v2/slice"
 	v1 "github.com/ljinf/im_server_standalone/api/v1"
+	"github.com/ljinf/im_server_standalone/internal/cache"
 	"github.com/ljinf/im_server_standalone/internal/model"
 	"github.com/ljinf/im_server_standalone/internal/repository"
 	"go.uber.org/zap"
@@ -47,8 +48,6 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 	var (
 		now = time.Now().Unix()
 
-		// 消息序列号
-		mSeq int64
 		//消息在会话中的序列号，用于保证消息的顺序
 		cSeq  int64
 		msgId string
@@ -66,22 +65,27 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 		ConversationId: req.ConversationId,
 		Content:        req.Content,
 		ContentType:    req.ContentType,
-		Seq:            cSeq,
 		Status:         0,
 		SentAt:         now,
 	}
 
 	//会话不存在
 	if len(msg.ConversationId) == 0 {
+		convs := []string{req.UserId, req.TargetId}
+		slice.Sort(convs)
+		// 单聊会话ID，如果是群聊，要显式创建，所以会话id不为空
+		convId := fmt.Sprintf("%v-%v", convs[0], convs[1])
+
+		cSeq = cache.IncrConversationMsg(s.cache.Redis(ctx), convId)
+		msg.Seq = cSeq
+		msg.ConversationId = convId
+
 		if err = s.tm.Transaction(ctx, func(ctx context.Context) error {
 			// 用户会话链
 			userConversationList := make([]*model.UserConversationList, 0, 2)
 
-			convId := []string{req.UserId, req.TargetId}
-			slice.Sort(convId)
-			// 单聊，如果是群聊，要显式创建，所以会话id不为空
 			conversationInfo := &model.ConversationList{
-				ConversationId: fmt.Sprintf("%v-%v", convId[0], convId[1]),
+				ConversationId: convId,
 				Type:           0,
 				Member:         2,
 				RecentMsgTime:  now,
@@ -91,12 +95,11 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 			if err = s.repo.CreateConversation(ctx, conversationInfo); err != nil {
 				return err
 			}
-			msg.ConversationId = conversationInfo.ConversationId
+
 			// 接收者的会话
 			userConversationList = append(userConversationList, &model.UserConversationList{
 				UserId:         req.TargetId,
 				ConversationId: msg.ConversationId,
-				CreatedAt:      now,
 			})
 
 			// 发送者的会话链
@@ -104,7 +107,6 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 				UserId:         req.UserId,
 				ConversationId: msg.ConversationId,
 				LastReadSeq:    cSeq,
-				CreatedAt:      now,
 			})
 			if err = s.repo.CreateUserConversationList(ctx, userConversationList...); err != nil {
 				return err
@@ -124,20 +126,20 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 				UserId:         req.UserId,
 				MsgId:          msgId,
 				ConversationId: msg.ConversationId,
-				Seq:            mSeq,
+				Seq:            cache.IncrUserMsg(s.cache.Redis(ctx), req.UserId),
 			},
 			&model.UserMsgList{
 				UserId:         req.TargetId,
 				MsgId:          msgId,
 				ConversationId: msg.ConversationId,
-				Seq:            mSeq,
+				Seq:            cache.IncrUserMsg(s.cache.Redis(ctx), req.TargetId),
 			}}
 		if err = s.repo.CreateUserMsgList(ctx, userMsgList...); err != nil {
 			return err
 		}
 
 		//消息体
-		return s.repo.CreateMsg(ctx, msg, mSeq)
+		return s.repo.CreateMsg(ctx, msg)
 	}); err != nil {
 		s.logger.Error(err.Error(), zap.Any("req", req))
 		return nil, err

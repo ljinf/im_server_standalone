@@ -17,14 +17,14 @@ const (
 type WsConn struct {
 	connManager *ConnMgr
 	logger      *log.Logger
-	ConnId      int64 //userId
+	ConnId      string //userId
 	Conn        *websocket.Conn
 	outChan     chan []byte
 	isClose     int32 // 0否  1是
 	once        sync.Once
 }
 
-func NewWsConn(logger *log.Logger, connManager *ConnMgr, connId int64, conn *websocket.Conn) *WsConn {
+func NewWsConn(logger *log.Logger, connManager *ConnMgr, connId string, conn *websocket.Conn) *WsConn {
 	return &WsConn{
 		connManager: connManager,
 		logger:      logger,
@@ -54,6 +54,9 @@ func (c *WsConn) readLoop(handler Dispatch) {
 		}
 		if messageType == websocket.PingMessage || messageType == websocket.PongMessage {
 			c.logger.Debug("ping/pong")
+			continue
+		}
+		if messageType == websocket.CloseMessage {
 			continue
 		}
 		handler(c.ConnId, payload)

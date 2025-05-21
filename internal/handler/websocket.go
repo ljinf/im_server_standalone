@@ -36,7 +36,7 @@ func NewWebSocketHandler(h *Handler, s service.WebsocketService) WebSocketHandle
 
 func (h *webSocketHandler) AcceptConn(ctx *gin.Context) {
 
-	/*if err := h.authorization(ctx); err != nil {
+	if err := h.authorization(ctx); err != nil {
 		v1.HandleError(ctx, http.StatusUnauthorized, err, nil)
 		return
 	}
@@ -47,7 +47,7 @@ func (h *webSocketHandler) AcceptConn(ctx *gin.Context) {
 		return
 	}
 	userId := GetUserIdFromCtx(ctx)
-	h.srv.InitConn(userId, conn)*/
+	h.srv.InitConn(userId, conn)
 }
 
 func (h *webSocketHandler) authorization(ctx *gin.Context) error {

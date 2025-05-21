@@ -5,6 +5,7 @@ import (
 	v1 "github.com/ljinf/im_server_standalone/api/v1"
 	"github.com/ljinf/im_server_standalone/internal/model"
 	"github.com/ljinf/im_server_standalone/internal/service"
+	"github.com/ljinf/im_server_standalone/pkg/contants"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -47,7 +48,7 @@ func (h *ChatHandler) SendChatMessage(ctx *gin.Context) {
 	}
 
 	// 转发给target
-	//h.socketSrv.SyncPushMsg(msgResp, params.TargetId)
+	h.socketSrv.SyncPushMsg(msgResp, params.TargetId)
 
 	v1.HandleSuccess(ctx, msgResp)
 }
@@ -93,8 +94,11 @@ func (h *ChatHandler) GetUserMsgList(ctx *gin.Context) {
 		return
 	}
 
+	if params.Limit <= 0 {
+		params.Limit = contants.DefaultMsgListSize
+	}
 	params.UserId = userId
-	msgList, err := h.srv.GetMsgList(ctx, params.UserId, params.ConversationId, params.Seq, params.PageNum, params.PageSize)
+	msgList, err := h.srv.GetMsgList(ctx, params.UserId, params.Seq, params.Limit)
 	if err != nil {
 		h.logger.Error(err.Error(), zap.Any("params", params))
 		v1.HandleSuccess(ctx, []model.MsgList{})

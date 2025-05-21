@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -13,10 +14,10 @@ import (
 )
 
 type WebsocketService interface {
-	InitConn(userId int64, conn *websocket.Conn)
-	PushMsg(payload []byte, userIds ...int64)
-	SyncPushMsg(msgInfo interface{}, userIds ...int64)
-	ProcessMsg(sender int64, payload []byte)
+	InitConn(userId string, conn *websocket.Conn)
+	PushMsg(payload []byte, userIds ...string)
+	SyncPushMsg(msgInfo interface{}, userIds ...string)
+	ProcessMsg(sender string, payload []byte)
 }
 
 type websocketService struct {
@@ -35,7 +36,7 @@ func NewWebsocketService(s *Service, wss ws.SocketWsServer, chatSrv ChatService,
 	}
 }
 
-func (w *websocketService) InitConn(userId int64, conn *websocket.Conn) {
+func (w *websocketService) InitConn(userId string, conn *websocket.Conn) {
 	wsConn := ws.NewWsConn(w.logger, w.GetConnManager(), userId, conn)
 	if err := w.AddConn(wsConn); err != nil {
 		w.logger.Error(err.Error(), zap.Any("userId", userId))
@@ -49,7 +50,7 @@ func (w *websocketService) InitConn(userId int64, conn *websocket.Conn) {
 }
 
 // 推送
-func (w *websocketService) PushMsg(payload []byte, userIds ...int64) {
+func (w *websocketService) PushMsg(payload []byte, userIds ...string) {
 	w.logger.Debug(fmt.Sprintf("push to user%v ", userIds))
 	if err := w.Push(payload, userIds...); err != nil {
 		w.logger.Error(err.Error())
@@ -57,7 +58,7 @@ func (w *websocketService) PushMsg(payload []byte, userIds ...int64) {
 }
 
 // 移步推送
-func (w *websocketService) SyncPushMsg(msgInfo interface{}, userIds ...int64) {
+func (w *websocketService) SyncPushMsg(msgInfo interface{}, userIds ...string) {
 	if err := w.task.Submit(func() {
 		payload, err := json.Marshal(msgInfo)
 		if err != nil {
@@ -71,7 +72,7 @@ func (w *websocketService) SyncPushMsg(msgInfo interface{}, userIds ...int64) {
 }
 
 // 消息处理
-func (w *websocketService) ProcessMsg(sender int64, payload []byte) {
+func (w *websocketService) ProcessMsg(sender string, payload []byte) {
 	var info model.WsMessage
 	if err := json.Unmarshal(payload, &info); err != nil {
 		w.logger.Error(err.Error(), zap.Any("消息内容解析错误 payload", string(payload)))
@@ -92,7 +93,7 @@ func (w *websocketService) ProcessMsg(sender int64, payload []byte) {
 }
 
 func (w *websocketService) msgChat(payload []byte) {
-	/*msgReq, err := parsePayload(payload)
+	msgReq, err := parsePayload(payload)
 	if err != nil {
 		w.logger.Error(err.Error(), zap.Any("msgChat", "parsePayload err"))
 		return
@@ -101,6 +102,7 @@ func (w *websocketService) msgChat(payload []byte) {
 	msgResp, err := w.chatSrv.CreateMsg(context.Background(), msgReq)
 	if err != nil {
 		w.logger.Error(err.Error(), zap.Any("msgChat", "CreateMsg err"))
+		return
 	}
 
 	resp, err := json.Marshal(msgResp)
@@ -109,7 +111,7 @@ func (w *websocketService) msgChat(payload []byte) {
 		return
 	}
 
-	//w.PushMsg(resp, msgResp.UserId, msgReq.TargetId)*/
+	w.PushMsg(resp, msgResp.UserId, msgReq.TargetId)
 }
 
 func parsePayload(payload []byte) (*v1.SendMsgReq, error) {

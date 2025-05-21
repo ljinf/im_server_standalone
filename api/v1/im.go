@@ -18,27 +18,40 @@ type SendMsgResp struct {
 	Status         int    `json:"status"`          //消息状态枚举，0可见 1屏蔽 2撤回
 	Seq            int64  `json:"seq"`
 	SendTime       int64  `json:"send_time"` //发送时间
-	CreatedAt      int64  `json:"created_at"`
 }
 
 type ConversationResp struct {
 	ConversationId string `json:"conversation_id"` //会话ID
 	Type           int    `json:"type"`            //会话类型枚举，0单聊 1群聊
-	Avatar         string `json:"avatar"`          //会话头像
-	LastReadSeq    int64  `json:"last_read_seq"`   //此会话用户已读的最后一条消息
-	NotifyType     int    `json:"notify_type"`     //会话收到消息的提醒类型，0未屏蔽，正常提醒 1屏蔽 2强提醒
-	IsTop          int    `json:"is_top"`          //会话是否被置顶展示
+	Member         int    `json:"member"`          //与会话相关的用户数量
+	Avatar         string `json:"avatar"`          //群组头像
+	Announcement   string `json:"announcement"`    //群公告
+	CreatedAt      int64  `json:"created_at"`
 
-	RecentMsg SendMsgResp              `json:"recent_msg"` //此会话最新产生的消息
-	UserList  []GetProfileResponseData `json:"user_list"`  //此会话的用户列表
+	UserId      string `json:"user_id"`       //用户ID
+	LastReadSeq int64  `json:"last_read_seq"` //此会话用户已读的最后一条消息
+	NotifyType  int    `json:"notify_type"`   //会话收到消息的提醒类型，0未屏蔽，正常提醒 1屏蔽 2强提醒
+	IsTop       int    `json:"is_top"`        //会话是否被置顶展示 0否 1是
+}
+
+type UserConversationResp struct {
+	ConversationId string `json:"conversation_id"` //会话ID
+	Type           int    `json:"type"`            //会话类型枚举，0单聊 1群聊
+	Member         int    `json:"member"`          //与会话相关的用户数量
+	Avatar         string `json:"avatar"`          //群组头像
+	Announcement   string `json:"announcement"`    //群公告
+	CreatedAt      int64  `json:"created_at"`
+
+	UserId      string `json:"user_id"`       //用户ID
+	LastReadSeq int64  `json:"last_read_seq"` //此会话用户已读的最后一条消息
+	NotifyType  int    `json:"notify_type"`   //会话收到消息的提醒类型，0未屏蔽，正常提醒 1屏蔽 2强提醒
+	IsTop       int    `json:"is_top"`        //会话是否被置顶展示 0否 1是
 }
 
 type HistoryMsgListReq struct {
-	UserId         string `json:"user_id"`                                             //用户ID
-	ConversationId string `json:"conversation_id" binding:"required" example:"123456"` //会话ID
-	Seq            int64  `json:"seq"`                                                 //消息序列号
-	PageNum        int    `json:"page_num"`
-	PageSize       int    `json:"page_size"`
+	UserId string `json:"user_id"` //用户ID
+	Seq    int64  `json:"seq"`     //消息序列号
+	Limit  int    `json:"limit"`
 }
 
 type ReportReadReq struct {

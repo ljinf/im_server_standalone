@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-type Dispatch func(sender int64, payload []byte)
+type Dispatch func(sender string, payload []byte)
 
 var (
 	server SocketWsServer
@@ -17,7 +17,7 @@ var (
 type SocketWsServer interface {
 	AddConn(c *WsConn) error
 	GetConnManager() *ConnMgr
-	Push(msg []byte, ids ...int64) error
+	Push(msg []byte, ids ...string) error
 }
 
 type wsServer struct {
@@ -48,7 +48,7 @@ func (s *wsServer) AddConn(c *WsConn) error {
 	return s.connMgr.AddConn(c)
 }
 
-func (s *wsServer) Push(msg []byte, ids ...int64) error {
+func (s *wsServer) Push(msg []byte, ids ...string) error {
 	if len(ids) > 0 {
 		for _, v := range ids {
 			if wsConn := s.connMgr.GetConn(v); wsConn != nil {

@@ -92,12 +92,16 @@ CREATE TABLE `user_conversation_list`
     `last_read_seq`   bigint(20) unsigned DEFAULT 0 COMMENT '此会话用户已读的最后一条消息',
     `notify_type`     int(11) DEFAULT 0 COMMENT '会话收到消息的提醒类型，0未屏蔽，正常提醒 1屏蔽 2强提醒',
     `is_top`          tinyint(2) DEFAULT 0 COMMENT '会话是否被置顶展示 0否 1是',
+    `version`         int(11) DEFAULT 1 COMMENT '会话版本号',
     `created_at`      datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`      datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY `user_conversation_idx` (`user_id`,`conversation_id`),
     KEY               `conversation_user_idx` (`conversation_id`,`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户会话链';
+
+alter table `user_conversation_list`
+    add column `version` int(11) DEFAULT 1 COMMENT '会话版本号' after `is_top`;
 
 DROP TABLE IF EXISTS `user_msg_list`;
 CREATE TABLE `user_msg_list`

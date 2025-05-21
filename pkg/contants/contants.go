@@ -29,4 +29,6 @@ const (
 	MsgContentTypeTxt   = 1 //文字
 	MsgContentTypeImg   = 2 //语音
 	MsgContentTypeVideo = 3 //视频
+
+	DefaultMsgListSize = 100
 )

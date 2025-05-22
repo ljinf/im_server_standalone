@@ -135,7 +135,7 @@ func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req
 				Remark:           req.Remark,
 				RelationshipType: contants.RelationshipTypeFriend,
 				Status:           contants.RelationshipStatusNormal,
-				CreatedAt:        now,
+				CreatedAt:        now.Unix(),
 				UpdatedAt:        now,
 			}
 
@@ -145,7 +145,7 @@ func (r *relationshipService) UpdateApplyFriendshipInfo(ctx context.Context, req
 				Remark:           applyInfo.Remark,
 				RelationshipType: contants.RelationshipTypeFriend,
 				Status:           contants.RelationshipStatusNormal,
-				CreatedAt:        now,
+				CreatedAt:        now.Unix(),
 				UpdatedAt:        now,
 			}
 			err = r.relationRepo.CreateRelationship(ctx, friendA, friendB)
@@ -194,6 +194,7 @@ func (r *relationshipService) GetRelationshipList(ctx context.Context, userId st
 			RelationshipType: v.RelationshipType,
 			Status:           v.Status,
 			Extra:            v.Extra,
+			CreatedAt:        v.CreatedAt,
 		})
 	}
 
@@ -224,7 +225,7 @@ func (r *relationshipService) AddRelationshipFollow(ctx context.Context, req *v1
 		RelationshipType: req.RelationshipType,
 		Status:           contants.RelationshipStatusNormal,
 		Extra:            req.Extra,
-		CreatedAt:        now,
+		CreatedAt:        now.Unix(),
 		UpdatedAt:        now,
 	}
 

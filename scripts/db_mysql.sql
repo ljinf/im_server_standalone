@@ -55,7 +55,7 @@ CREATE TABLE `relationship_list`
     `relationship_type` TINYINT(2) DEFAULT '1' COMMENT '关系类型  1好友 2关注',
     `status`            TINYINT(2) DEFAULT '1' COMMENT '状态 1正常 2拉黑 3删除',
     `extra`             VARCHAR(256) DEFAULT '' COMMENT '其他信息',
-    `created_at`        DATETIME     DEFAULT NULL,
+    `created_at`        BIGINT(20) DEFAULT NULL,
     `updated_at`        DATETIME     DEFAULT NULL,
     `deleted_at`        DATETIME     DEFAULT NULL,
     PRIMARY KEY (`id`),

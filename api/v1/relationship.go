@@ -34,4 +34,5 @@ type RelationshipRespData struct {
 	RelationshipType int    `json:"relationship_type" binding:"required" example:"1"` //关系类型  1好友 2关注
 	Status           int    `json:"status"`                                           //状态 1正常 2拉黑 3删除
 	Extra            string `json:"extra"`                                            //其他信息
+	CreatedAt        int64  `json:"created_at"`
 }

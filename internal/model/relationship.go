@@ -14,7 +14,7 @@ type RelationshipList struct {
 	RelationshipType int            `json:"relationship_type"` //关系类型  1好友 2关注
 	Status           int            `json:"status"`            //状态 1正常 2拉黑 3删除
 	Extra            string         `json:"extra"`             //其他信息
-	CreatedAt        time.Time      `json:"-"`
+	CreatedAt        int64          `json:"created_at"`
 	UpdatedAt        time.Time      `json:"-"`
 	DeletedAt        gorm.DeletedAt `json:"-"`
 }

@@ -30,8 +30,8 @@ func GetUserIdFromCtx(ctx *gin.Context) string {
 }
 
 type PageInfo struct {
-	PageNum  int `json:"page_num"`
-	PageSize int `json:"page_size"`
+	PageNum  int64 `json:"page_num"`
+	PageSize int64 `json:"page_size"`
 }
 
 func GetPageInfo(ctx *gin.Context) *PageInfo {

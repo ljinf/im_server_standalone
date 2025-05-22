@@ -51,7 +51,7 @@ func (h *RelationshipHandler) GetApplyFriendshipList(ctx *gin.Context) {
 	}
 
 	pageInfo := GetPageInfo(ctx)
-	list, err := h.srv.GetApplyFriendshipList(ctx, userId, pageInfo.PageNum, pageInfo.PageSize)
+	list, err := h.srv.GetApplyFriendshipList(ctx, userId, int(pageInfo.PageNum), int(pageInfo.PageSize))
 	if err != nil {
 		v1.HandleError(ctx, http.StatusOK, err, nil)
 		return

@@ -18,8 +18,9 @@ type ChatService interface {
 	GetMsgList(ctx context.Context, userId string, seq int64, limit int) (interface{}, error)
 
 	// 会话
-	GetUserConversationList(ctx context.Context, userId string, pageNum, pageSize int64) ([]v1.ConversationResp, error)
+	GetUserConversationList(ctx context.Context, userId string, version, pageNum, pageSize int64) (interface{}, error)
 	GetConversationUsers(ctx context.Context, conversationId string) ([]v1.GetProfileResponseData, error) //会话下的用户
+	EditConversationReadSeq(ctx context.Context, userId, conversationId string, seq int64) error
 	//创建会话
 	CreateConversationList(ctx context.Context, list ...*model.ConversationList) error
 
@@ -185,42 +186,29 @@ func (s *chatService) GetMsgList(ctx context.Context, userId string, seq int64, 
 	}, nil
 }
 
-func (s *chatService) GetUserConversationList(ctx context.Context, userId string, pageNum, pageSize int64) ([]v1.ConversationResp, error) {
-	/*userConversationList, err := s.repo.SelectUserConversationList(ctx, userId, pageNum, pageSize)
+func (s *chatService) GetUserConversationList(ctx context.Context, userId string, version, pageNum, pageSize int64) (interface{}, error) {
+	userConversationList, total, err := s.repo.SelectUserConversationList(ctx, userId, version, pageNum, pageSize)
 	if err != nil {
 		s.logger.Error(err.Error(), zap.Any("userId", userId))
 		return nil, v1.ErrInternalServerError
 	}
 
-	convIds := make([]int64, 0, len(userConversationList))
-	for _, v := range userConversationList {
-		convIds = append(convIds, v.ConversationId)
-	}
-	conversationLists, err := s.repo.SelectConversation(ctx, convIds...)
-	if err != nil {
-		return nil, v1.ErrInternalServerError
-	}
-
 	resp := make([]v1.ConversationResp, 0, len(userConversationList))
-	for index, v := range userConversationList {
+	for _, v := range userConversationList {
 		conv := v1.ConversationResp{
+			UserId:         userId,
 			ConversationId: v.ConversationId,
-			Type:           conversationLists[index].Type,
-			Avatar:         conversationLists[index].Avatar,
 			LastReadSeq:    v.LastReadSeq,
 			NotifyType:     v.NotifyType,
 			IsTop:          v.IsTop,
-			RecentMsg:      s.GetLastConversationMsg(ctx, v.ConversationId),
-		}
-		//单聊会话获取用户列表
-		if conv.Type == contants.ConversationTypeC2C {
-			conversationUsers, _ := s.GetConversationUsers(ctx, v.ConversationId)
-			conv.UserList = conversationUsers //会话用户列表
+			Version:        v.Version,
 		}
 		resp = append(resp, conv)
 	}
-	return resp, nil*/
-	return nil, nil
+	return map[string]interface{}{
+		"rows":  resp,
+		"total": total,
+	}, nil
 }
 
 func (s *chatService) CreateConversationList(ctx context.Context, list ...*model.ConversationList) error {
@@ -273,6 +261,14 @@ func (s *chatService) GetLastConversationMsg(ctx context.Context, conversationId
 		Content:        lastMsg.Content,
 		ContentType:    lastMsg.ContentType,
 		Status:         lastMsg.Status,
-		//SendTime:       lastMsg.SendTime,
+		SendTime:       lastMsg.SentAt,
 	}
+}
+
+func (s *chatService) EditConversationReadSeq(ctx context.Context, userId, conversationId string, seq int64) error {
+	if err := s.repo.UpdateConversationReadSeq(ctx, userId, conversationId, seq); err != nil {
+		s.logger.Error(err.Error(), zap.String("userId", userId), zap.String("conversationId", conversationId),
+			zap.Int64("seq", seq))
+	}
+	return nil
 }

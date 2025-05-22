@@ -32,6 +32,7 @@ type ConversationResp struct {
 	LastReadSeq int64  `json:"last_read_seq"` //此会话用户已读的最后一条消息
 	NotifyType  int    `json:"notify_type"`   //会话收到消息的提醒类型，0未屏蔽，正常提醒 1屏蔽 2强提醒
 	IsTop       int    `json:"is_top"`        //会话是否被置顶展示 0否 1是
+	Version     int    `json:"version"`       //会话版本号
 }
 
 type UserConversationResp struct {
@@ -60,8 +61,9 @@ type ReportReadReq struct {
 	Seq            int64  `json:"seq"`                                                 //消息序列号
 }
 
-type ConversationMsgListReq struct {
+type UserConversationListReq struct {
 	UserId   string `json:"user_id"` //用户ID
-	PageNum  int    `json:"page_num" binding:"required" example:"1"`
-	PageSize int    `json:"page_size" binding:"required" example:"10"`
+	Version  int64  `json:"version"`
+	PageNum  int64  `json:"page_num"`
+	PageSize int64  `json:"page_size"`
 }

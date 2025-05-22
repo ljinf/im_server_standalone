@@ -33,8 +33,10 @@ type ChatRepository interface {
 	CreateUserConversationList(ctx context.Context, req ...*model.UserConversationList) error
 	UpdateUserConversationList(ctx context.Context, req *model.UserConversationList) error
 	// 用户会话列表
-	SelectUserConversationList(ctx context.Context, userId string, version, pageNum, pageSize int64) ([]model.UserConversationList, error)
+	SelectUserConversationList(ctx context.Context, userId string, version, pageNum, pageSize int64) ([]model.UserConversationList, int, error)
 	SelectConversationUsers(ctx context.Context, conversationId string) ([]model.UserInfo, error) //会话下的用户列表
+	//会话已读序列号
+	UpdateConversationReadSeq(ctx context.Context, userId, conversationId string, seq int64) error
 }
 
 type chatRepository struct {
@@ -251,26 +253,20 @@ func (r *chatRepository) UpdateUserConversationList(ctx context.Context, req *mo
 }
 
 // 获取用户会话链信息
-func (r *chatRepository) SelectUserConversationList(ctx context.Context, userId string, version, pageNum, pageSize int64) ([]model.UserConversationList, error) {
+func (r *chatRepository) SelectUserConversationList(ctx context.Context, userId string, version, pageNum, pageSize int64) ([]model.UserConversationList, int, error) {
 
-	/*list, err := cache.GetUserConversationListCache(r.rdb, userId, pageNum, pageSize)
-	if err != nil {
-		r.logger.Error(err.Error(), zap.Any("uid", userId))
+	var (
+		list  []model.UserConversationList
+		count int64
+	)
+
+	if err := r.DB(ctx).Where("user_id=? and version > ?", userId, version).Limit(int(pageSize)).Offset(int((pageNum - 1) * pageSize)).Find(&list).Error; err != nil {
+		return nil, 0, err
 	}
 
-	if len(list) > 0 {
-		return list, nil
-	}*/
+	r.DB(ctx).Table((&model.UserConversationList{}).TableName()).Where("user_id=? and version > ?", userId, version).Count(&count)
 
-	var list []model.UserConversationList
-	err := r.DB(ctx).Where("user_id=? and version > ?", userId, version).Limit(int(pageSize)).Offset(int((pageNum - 1) * pageSize)).Find(&list).Error
-	/*if len(list) > 0 {
-		if err = cache.SetUserConversationCache(r.rdb, list...); err != nil {
-			r.logger.Error(err.Error())
-		}
-	}*/
-
-	return list, err
+	return list, int(count), nil
 }
 
 // 会话下的所有用户
@@ -335,4 +331,12 @@ func (r *chatRepository) SelectLastConversationMsg(ctx context.Context, conversa
 		return &list[0], nil
 	}
 	return nil, errors.New("ConversationNewestMsg Not Found")
+}
+
+// 更新会话已读序列号
+func (r *chatRepository) UpdateConversationReadSeq(ctx context.Context, userId, conversationId string, seq int64) error {
+
+	querySql := "UPDATE `user_conversation_list` SET `last_read_seq`=? WHERE `user_id`=? AND `conversation_id`=?"
+
+	return r.DB(ctx).Exec(querySql, seq, userId, conversationId).Error
 }

@@ -15,7 +15,8 @@ import (
 type ChatService interface {
 	CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.SendMsgResp, error)
 	//历史消息
-	GetMsgList(ctx context.Context, userId string, seq int64, limit int) (interface{}, error)
+	GetConversationMsgList(ctx context.Context, conversationId string, seq int64, limit int) (interface{}, error) //通过会话消息链
+	GetUserMsgList(ctx context.Context, userId string, seq int64, limit int) (interface{}, error)                 //通过用户消息链
 
 	// 会话
 	GetUserConversationList(ctx context.Context, userId string, version, pageNum, pageSize int64) (interface{}, error)
@@ -161,10 +162,36 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 	return resp, nil
 }
 
-func (s *chatService) GetMsgList(ctx context.Context, userId string, seq int64, limit int) (interface{}, error) {
+func (s *chatService) GetUserMsgList(ctx context.Context, userId string, seq int64, limit int) (interface{}, error) {
 	msgLists, total, err := s.repo.SelectMsgListByUserId(ctx, userId, seq, limit)
 	if err != nil {
 		s.logger.Error(err.Error(), zap.String("userId", userId), zap.Int64("seq", seq))
+	}
+
+	resp := make([]v1.SendMsgResp, 0, len(msgLists))
+	for _, v := range msgLists {
+		resp = append(resp, v1.SendMsgResp{
+			UserId:         v.UserId,
+			MsgId:          v.MsgId,
+			ConversationId: v.ConversationId,
+			Content:        v.Content,
+			ContentType:    v.ContentType,
+			Status:         v.Status,
+			Seq:            v.Seq,
+			UserSeq:        v.UserSeq,
+			SendTime:       v.SentAt,
+		})
+	}
+	return map[string]interface{}{
+		"rows":  resp,
+		"total": total,
+	}, nil
+}
+
+func (s *chatService) GetConversationMsgList(ctx context.Context, conversationId string, seq int64, limit int) (interface{}, error) {
+	msgLists, total, err := s.repo.SelectMsgListByConvId(ctx, conversationId, seq, limit)
+	if err != nil {
+		s.logger.Error(err.Error(), zap.String("convId", conversationId), zap.Int64("seq", seq))
 	}
 
 	resp := make([]v1.SendMsgResp, 0, len(msgLists))

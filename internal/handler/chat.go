@@ -3,7 +3,6 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	v1 "github.com/ljinf/im_server_standalone/api/v1"
-	"github.com/ljinf/im_server_standalone/internal/model"
 	"github.com/ljinf/im_server_standalone/internal/service"
 	"github.com/ljinf/im_server_standalone/pkg/contants"
 	"go.uber.org/zap"
@@ -82,6 +81,7 @@ func (h *ChatHandler) GetUserConversationList(ctx *gin.Context) {
 }
 
 // 消息列表
+// 用户消息链下的消息
 func (h *ChatHandler) GetUserMsgList(ctx *gin.Context) {
 
 	userId := GetUserIdFromCtx(ctx)
@@ -101,11 +101,43 @@ func (h *ChatHandler) GetUserMsgList(ctx *gin.Context) {
 		params.Limit = contants.DefaultMsgListSize
 	}
 	params.UserId = userId
-	msgList, err := h.srv.GetMsgList(ctx, params.UserId, params.Seq, params.Limit)
+	msgList, err := h.srv.GetUserMsgList(ctx, params.UserId, params.Seq, params.Limit)
 	if err != nil {
 		h.logger.Error(err.Error(), zap.Any("params", params))
-		v1.HandleSuccess(ctx, []model.MsgList{})
+		msgList = []v1.SendMsgResp{}
+	}
+	v1.HandleSuccess(ctx, msgList)
+}
+
+// 获取会话下消息
+func (h *ChatHandler) GetConversationMsgList(ctx *gin.Context) {
+
+	userId := GetUserIdFromCtx(ctx)
+	if len(userId) == 0 {
+		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
 		return
+	}
+
+	var params v1.HistoryMsgListReq
+	if err := ctx.ShouldBind(&params); err != nil {
+		h.logger.Error(err.Error())
+		v1.HandleError(ctx, http.StatusOK, v1.ErrBadRequest, nil)
+		return
+	}
+
+	if len(params.ConversationId) == 0 {
+		v1.HandleError(ctx, http.StatusOK, v1.ErrBadRequest, nil)
+		return
+	}
+
+	if params.Limit <= 0 {
+		params.Limit = contants.DefaultMsgListSize
+	}
+	params.UserId = userId
+	msgList, err := h.srv.GetConversationMsgList(ctx, params.UserId, params.Seq, params.Limit)
+	if err != nil {
+		h.logger.Error(err.Error(), zap.Any("params", params))
+		msgList = []v1.SendMsgResp{}
 	}
 	v1.HandleSuccess(ctx, msgList)
 }

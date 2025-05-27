@@ -16,8 +16,8 @@ type ChatRepository interface {
 	// 消息
 	CreateMsg(ctx context.Context, req *model.MsgList) error
 	SelectMsgList(ctx context.Context, msgId ...interface{}) ([]model.MsgResp, error)
-	SelectMsgListByUserId(ctx context.Context, userId string, seq int64, limit int) ([]model.MsgList, int, error)
-	SelectMsgListByConvId(ctx context.Context, convId string, seq, limit int) ([]model.MsgList, int, error)
+	SelectMsgListByUserId(ctx context.Context, userId string, seq int64, limit int) ([]model.MsgResp, int, error)
+	SelectMsgListByConvId(ctx context.Context, convId string, seq int64, limit int) ([]model.MsgList, int, error)
 	UpdateMsg(ctx context.Context, req *model.MsgList) error
 
 	// 会话消息
@@ -129,7 +129,7 @@ func (r *chatRepository) SelectMsgList(ctx context.Context, msgId ...interface{}
 	//SELECT m.`msg_id`,m.`user_id`,m.`conversation_id`,m.`content`,m.`content_type`,m.`send_time`,m.`status`,cm.`seq`
 	//FROM `msg_list` m INNER JOIN `conversation_msg_list` cm ON cm.`conversation_id`=m.`conversation_id WHERE m.`msg_id` IN ()
 	if err := r.DB(ctx).Table("`msg_list` m").Select("m.`msg_id`,m.`user_id`,m.`conversation_id`,m.`content`,m.`content_type`,"+
-		"m.`send_time`,m.`status`,cm.`seq`").
+		"m.`sent_at`,m.`status`,cm.`seq`").
 		Joins("INNER JOIN `conversation_msg_list` cm on ON cm.`conversation_id`=m.`conversation_id").
 		Where("m.`msg_id` IN ?", msgId).Find(&list).Error; err != nil {
 		return nil, err
@@ -142,15 +142,15 @@ func (r *chatRepository) SelectMsgList(ctx context.Context, msgId ...interface{}
 	return list, nil
 }
 
-func (r *chatRepository) SelectMsgListByUserId(ctx context.Context, userId string, seq int64, limit int) ([]model.MsgList, int, error) {
+func (r *chatRepository) SelectMsgListByUserId(ctx context.Context, userId string, seq int64, limit int) ([]model.MsgResp, int, error) {
 	var (
-		list  []model.MsgList
+		list  []model.MsgResp
 		total int64
 	)
 
-	querySql := "SELECT m.`id`,m.`user_id`,m.`msg_id`,m.`conversation_id`,m.`content`,m.`content_type`,m.`seq`,m.`status`,m.`sent_at` " +
+	querySql := "SELECT m.`id`,m.`user_id`,m.`msg_id`,m.`conversation_id`,m.`content`,m.`content_type`,m.`seq`,um.`seq` `user_seq`,m.`status`,m.`sent_at` " +
 		"FROM `user_msg_list` um " +
-		"INNER JOIN  `msg_list` m ON um.`msg_id`=m.`msg_id` WHERE um.`user_id`=? AND um.`seq` > ? LIMIT ?"
+		"INNER JOIN  `msg_list` m ON um.`msg_id`=m.`msg_id` WHERE um.`user_id`=? AND um.`seq` > ? order by um.`seq` asc LIMIT ?"
 
 	if err := r.DB(ctx).Raw(querySql, userId, seq, limit).Find(&list).Error; err != nil {
 		return list, 0, err
@@ -162,7 +162,7 @@ func (r *chatRepository) SelectMsgListByUserId(ctx context.Context, userId strin
 	return list, int(total), nil
 }
 
-func (r *chatRepository) SelectMsgListByConvId(ctx context.Context, convId string, seq, limit int) ([]model.MsgList, int, error) {
+func (r *chatRepository) SelectMsgListByConvId(ctx context.Context, convId string, seq int64, limit int) ([]model.MsgList, int, error) {
 	var (
 		list  []model.MsgList
 		total int64

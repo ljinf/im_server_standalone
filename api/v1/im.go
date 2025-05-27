@@ -16,8 +16,9 @@ type SendMsgResp struct {
 	Content        string `json:"content"`         //消息文本
 	ContentType    int    `json:"content_type"`    //内容类型  1文本  2图片 3音频文件  4音频文件  5实时语音  6实时视频
 	Status         int    `json:"status"`          //消息状态枚举，0可见 1屏蔽 2撤回
-	Seq            int64  `json:"seq"`
-	SendTime       int64  `json:"send_time"` //发送时间
+	Seq            int64  `json:"seq"`             //消息在会话中的序列号，用于保证消息的顺序
+	UserSeq        int64  `json:"user_seq"`        //用户消息链序列号
+	SendTime       int64  `json:"send_time"`       //发送时间
 }
 
 type ConversationResp struct {
@@ -50,9 +51,10 @@ type UserConversationResp struct {
 }
 
 type HistoryMsgListReq struct {
-	UserId string `json:"user_id"` //用户ID
-	Seq    int64  `json:"seq"`     //消息序列号
-	Limit  int    `json:"limit"`
+	UserId         string `json:"user_id"`         //用户ID
+	ConversationId string `json:"conversation_id"` //会话ID
+	Seq            int64  `json:"seq"`             //消息序列号
+	Limit          int    `json:"limit"`
 }
 
 type ReportReadReq struct {

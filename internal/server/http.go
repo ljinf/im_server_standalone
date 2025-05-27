@@ -96,7 +96,9 @@ func NewHTTPServer(
 			chatGroup.POST("/send", chatHandler.SendChatMessage)
 			chatGroup.POST("/conversation/list", chatHandler.GetUserConversationList)
 			//同步历史消息
-			chatGroup.POST("/msg/history/list", chatHandler.GetUserMsgList)
+			chatGroup.POST("/msg/history/list", chatHandler.GetUserMsgList) //用户消息链
+			chatGroup.POST("/msg/list", chatHandler.GetConversationMsgList) //会话消息链
+
 			chatGroup.POST("/report/msg/read", chatHandler.ReportReadMsgSeq)
 		}
 	}

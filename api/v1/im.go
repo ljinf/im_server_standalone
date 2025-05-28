@@ -1,6 +1,7 @@
 package v1
 
 type SendMsgReq struct {
+	ClientId       string `json:"client_id"`                                           //客户端的消息唯一识别
 	ConversationId string `json:"conversation_id" binding:"required" example:"123456"` //会话ID
 	UserId         string `json:"user_id"`                                             //发送者ID
 	TargetId       string `json:"target_id" binding:"required" example:"123456"`       //接收者ID
@@ -10,6 +11,7 @@ type SendMsgReq struct {
 }
 
 type SendMsgResp struct {
+	ClientId       string `json:"client_id"`       //客户端的消息唯一识别
 	UserId         string `json:"user_id"`         //发送者ID
 	MsgId          string `json:"msg_id"`          //消息ID
 	ConversationId string `json:"conversation_id"` //会话ID

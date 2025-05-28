@@ -52,6 +52,7 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 
 		//消息在会话中的序列号，用于保证消息的顺序
 		cSeq   int64
+		uSeq   int64 //用户消息链的序列号
 		msgId  string
 		convId string
 	)
@@ -122,13 +123,14 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 
 	if err = s.tm.Transaction(ctx, func(ctx context.Context) error {
 
+		uSeq = cache.IncrUserMsg(s.cache.Redis(ctx), req.UserId)
 		//用户消息链
 		userMsgList := []*model.UserMsgList{
 			&model.UserMsgList{
 				UserId:         req.UserId,
 				MsgId:          msgId,
 				ConversationId: msg.ConversationId,
-				Seq:            cache.IncrUserMsg(s.cache.Redis(ctx), req.UserId),
+				Seq:            uSeq,
 			},
 			&model.UserMsgList{
 				UserId:         req.TargetId,
@@ -150,6 +152,7 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 	}
 
 	resp := &v1.SendMsgResp{
+		ClientId:       req.ClientId,
 		UserId:         msg.UserId,
 		MsgId:          msg.MsgId,
 		ConversationId: msg.ConversationId,
@@ -157,6 +160,7 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 		ContentType:    msg.ContentType,
 		Status:         msg.Status,
 		Seq:            msg.Seq,
+		UserSeq:        uSeq,
 		SendTime:       msg.SentAt,
 	}
 	return resp, nil

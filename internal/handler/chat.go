@@ -142,7 +142,7 @@ func (h *ChatHandler) GetConversationMsgList(ctx *gin.Context) {
 	v1.HandleSuccess(ctx, msgList)
 }
 
-// 上报已读
+// 上报会话已读的最大消息序列号
 func (h *ChatHandler) ReportReadMsgSeq(ctx *gin.Context) {
 
 	userId := GetUserIdFromCtx(ctx)

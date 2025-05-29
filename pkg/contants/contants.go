@@ -32,3 +32,23 @@ const (
 
 	DefaultMsgListSize = 100
 )
+
+// social
+const (
+
+	//时刻状态 1-审核中 2-正常 3-违规 4-删除
+	MomentStatusPending   = 1 //审核中
+	MomentStatusNormal    = 2 //正常
+	MomentStatusViolation = 3 //违规
+	MomentStatusDelete    = 4 //删除
+
+	//点赞
+	MomentLikeNormal = 1 //正常
+	MomentLikeCancel = 2 //取消
+
+	//评论  //状态，1-审核中 2-正常 3-违规 4-删除
+	MomentCommentStatusPending   = 1 //审核中
+	MomentCommentStatusNormal    = 2 //正常
+	MomentCommentStatusViolation = 3 //违规
+	MomentCommentStatusDelete    = 4 //删除
+)

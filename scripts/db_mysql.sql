@@ -44,6 +44,7 @@ CREATE TABLE `user_info`
     KEY                 `deleted_idx` (`deleted_at`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT '用户信息表';
 
+-- 聊天相关
 
 DROP TABLE IF EXISTS `relationship_list`;
 CREATE TABLE `relationship_list`
@@ -164,6 +165,99 @@ CREATE TABLE `conversation_msg_list`
     PRIMARY KEY (`id`),
     KEY               conversation_seq_msg_idx(`conversation_id`,`seq`,`msg_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话消息链(读扩散)';
+
+
+-- 社交圈子
+
+DROP TABLE IF EXISTS `community_moment_list`;
+CREATE TABLE `community_moment_list`
+(
+    `id`              bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+    `user_id`         bigint(20) unsigned NOT NULL COMMENT '用户ID',
+    `moment_id`       bigint(20) unsigned NOT NULL COMMENT '时刻ID',
+    `content`         text COMMENT '描述内容',
+    `attachment`      text COMMENT '图片/音频/视频的url集合',
+    `attachment_type` tinyint(2) DEFAULT NULL COMMENT '类型 1-图片  2-音频  3-视频文件',
+    `public`          tinyint(2) DEFAULT '1' COMMENT '可见范围 1-公共  2-私密',
+    `status`          tinyint(2) unsigned DEFAULT '1' COMMENT '状态，1-审核中 2-正常 3-违规',
+    `is_del`          tinyint(2) unsigned DEFAULT 1 COMMENT '删除状态，1-正常 2-删除',
+    `created_at`      int(11) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY               `moment_idx` (`moment_id`),
+    KEY               `user_moment_idx` (`user_id`,`moment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户发布的时刻';
+
+
+DROP TABLE IF EXISTS `moment_count_list`;
+CREATE TABLE `moment_count_list`
+(
+    `id`                bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+    `moment_id`         bigint(20) unsigned NOT NULL COMMENT '时刻ID',
+    `like_count`        int(11) NOT NULL DEFAULT '0' COMMENT '点赞数',
+    `like_cancel_count` int(11) NOT NULL DEFAULT '0' COMMENT '点赞取消数',
+    `comment_count`     int(11) NOT NULL DEFAULT '0' COMMENT '评论数',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `moment_id_idx` (`moment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='时刻历史点赞评论计数';
+
+
+DROP TABLE IF EXISTS `moment_like_list`;
+CREATE TABLE `moment_like_list`
+(
+    `id`         bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+    `moment_id`  bigint(20) unsigned NOT NULL COMMENT '时刻ID',
+    `user_id`    bigint(20) unsigned NOT NULL COMMENT '用户ID',
+    `status`     tinyint(2) unsigned DEFAULT 1 COMMENT '状态，1-正常 2-取消',
+    `created_at` int(11) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `user_moment_idx` (`user_id`,`moment_id`),
+    KEY          `user_create_status_idx` (`user_id`,`created_at`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='时刻的点赞记录';
+
+DROP TABLE IF EXISTS `moment_comment_list`;
+CREATE TABLE `moment_comment_list`
+(
+    `id`               bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+    `comment_id`       bigint(20) unsigned NOT NULL COMMENT '评论ID',
+    `parent_id`        bigint(20) NULL COMMENT '顶级评论ID，没有则为0',
+    `moment_id`        bigint(20) unsigned NOT NULL COMMENT '时刻ID',
+    `user_id`          bigint(20) unsigned NOT NULL COMMENT '用户ID',
+    `reply_id`         bigint(20) NULL COMMENT '回复 用户ID，没有则为0',
+    `reply_comment_id` bigint(20) NULL COMMENT '回复评论ID，没有则为0',
+    `content`          text COMMENT '描述内容',
+    `status`           tinyint(2) unsigned DEFAULT 1 COMMENT '状态，1-审核中 2-正常 3-违规',
+    `is_del`           tinyint(2) unsigned DEFAULT 1 COMMENT '删除状态，1-正常 2-删除',
+    `created_at`       int(11) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`id`),
+    KEY                `user_idx` (`user_id`,`created_at`),
+    KEY                `moment_commentparnet_id_idx` (`moment_id`,`parent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='时刻的评论记录';
+
+DROP TABLE IF EXISTS `moment_comment_count_list`;
+CREATE TABLE `moment_comment_count_list`
+(
+    `id`                bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+    `comment_id`        bigint(20) unsigned NOT NULL COMMENT '评论ID',
+    `like_count`        int(11) NOT NULL DEFAULT '0' COMMENT '点赞数',
+    `like_cancel_count` int(11) NOT NULL DEFAULT '0' COMMENT '点赞取消数',
+    `comment_count`     int(11) NOT NULL DEFAULT '0' COMMENT '评论数',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `comment_idx` (`comment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评论被点赞回复计数';
+
+DROP TABLE IF EXISTS `moment_comment_like_list`;
+CREATE TABLE `moment_comment_like_list`
+(
+    `id`         bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+    `comment_id` bigint(20) unsigned NOT NULL COMMENT '评论ID',
+    `user_id`    bigint(20) unsigned NOT NULL COMMENT '用户ID',
+    `status`     tinyint(2) unsigned DEFAULT 1 COMMENT '状态，1-正常 2-取消',
+    `created_at` int(11) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`id`),
+    unique key `usercomment_idx` (`user_id`,`comment_id`),
+    key          `user_create_idx` (`user_id`,`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评论被点赞的记录';
+
 
 
 

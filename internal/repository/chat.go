@@ -226,7 +226,8 @@ func (r *chatRepository) CreateUserConversationList(ctx context.Context, req ...
 
 // 更新会话信息
 func (r *chatRepository) UpdateUserConversationList(ctx context.Context, req *model.UserConversationList) error {
-	if err := r.DB(ctx).Where("user_id=? and conversation_id=?", req.UserId, req.ConversationId).Updates(req).Error; err != nil {
+	if err := r.DB(ctx).Where("user_id=? and conversation_id=? and last_read_seq<?",
+		req.UserId, req.ConversationId, req.LastReadSeq).Updates(req).Error; err != nil {
 		return err
 	}
 

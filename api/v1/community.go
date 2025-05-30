@@ -12,7 +12,7 @@ type AddMomentReq struct {
 	Status         int             `json:"status"`          //状态，1-审核中 2-正常 3-违规 4-删除
 }
 
-type GetMomentListReq struct {
+type MomentListReq struct {
 	UserId string `json:"user_id"` //当前登录的用户
 
 	WhereUser string `json:"where_user"` //查询条件的用户ID，即是某人的时刻

@@ -29,6 +29,7 @@ var repositorySet = wire.NewSet(
 	repository.NewUserRepository,
 	repository.NewRelationshipRepository,
 	repository.NewChatRepository,
+	repository.NewCommunityRepository,
 )
 
 var serviceSet = wire.NewSet(
@@ -37,6 +38,7 @@ var serviceSet = wire.NewSet(
 	service.NewWebsocketService,
 	service.NewRelationshipService,
 	service.NewChatService,
+	service.NewCommunityService,
 )
 
 var handlerSet = wire.NewSet(
@@ -45,6 +47,8 @@ var handlerSet = wire.NewSet(
 	handler.NewWebSocketHandler,
 	handler.NewRelationshipHandler,
 	handler.NewChatHandler,
+	handler.NewFileHandler,
+	handler.NewCommunityHandler,
 )
 
 var serverSet = wire.NewSet(
@@ -57,7 +61,7 @@ var serverSet = wire.NewSet(
 func newApp(
 	httpServer *http.Server,
 	job *server.Job,
-	// task *server.Task,
+// task *server.Task,
 ) *app.App {
 	return app.NewApp(
 		app.WithServer(httpServer, job),

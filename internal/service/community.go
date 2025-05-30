@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-type CommunityDomainService interface {
+type CommunityService interface {
 	//时刻
 	AddMoment(ctx context.Context, req *v1.AddMomentReq) error
 	EditMoment(ctx context.Context, req *v1.AddMomentReq) error
-	GetMomentList(ctx context.Context, req *v1.GetMomentListReq) []model.CommunityMomentResp
+	GetMomentList(ctx context.Context, req *v1.MomentListReq) []model.CommunityMomentResp
 
 	//点赞
 	AddMomentLike(ctx context.Context, req *v1.AddMomentLikeReq) error
@@ -26,12 +26,12 @@ type CommunityDomainService interface {
 	GetMomentCommentList(ctx context.Context, req *v1.MomentCommentListReq) []v1.MomentCommentListResp
 }
 
-type communityDomainService struct {
+type communityService struct {
 	*Service
 	repo repository.CommunityRepository
 }
 
-func (c *communityDomainService) AddMomentCommentLike(ctx context.Context, req *v1.AddMomentCommentLikeReq) error {
+func (c *communityService) AddMomentCommentLike(ctx context.Context, req *v1.AddMomentCommentLikeReq) error {
 	var (
 		count       int
 		cancelCount int
@@ -69,7 +69,7 @@ func (c *communityDomainService) AddMomentCommentLike(ctx context.Context, req *
 	return nil
 }
 
-func (c *communityDomainService) AddMoment(ctx context.Context, req *v1.AddMomentReq) error {
+func (c *communityService) AddMoment(ctx context.Context, req *v1.AddMomentReq) error {
 	momentId, err := c.sid.GenUint64()
 	if err != nil {
 		//log.Error(ctx, "SidGenUint64Err", "err", err.Error())
@@ -99,7 +99,7 @@ func (c *communityDomainService) AddMoment(ctx context.Context, req *v1.AddMomen
 	return nil
 }
 
-func (c *communityDomainService) EditMoment(ctx context.Context, req *v1.AddMomentReq) error {
+func (c *communityService) EditMoment(ctx context.Context, req *v1.AddMomentReq) error {
 	moment := model.CommunityMoment{
 		MomentId: req.MomentId,
 		UserId:   req.UserId,
@@ -116,7 +116,7 @@ func (c *communityDomainService) EditMoment(ctx context.Context, req *v1.AddMome
 	return nil
 }
 
-func (c *communityDomainService) GetMomentList(ctx context.Context, req *v1.GetMomentListReq) []model.CommunityMomentResp {
+func (c *communityService) GetMomentList(ctx context.Context, req *v1.MomentListReq) []model.CommunityMomentResp {
 
 	list, err := c.repo.SelectCommunityMomentList(ctx, req)
 	if err != nil {
@@ -141,7 +141,7 @@ func (c *communityDomainService) GetMomentList(ctx context.Context, req *v1.GetM
 	return list
 }
 
-func (c *communityDomainService) AddMomentLike(ctx context.Context, req *v1.AddMomentLikeReq) error {
+func (c *communityService) AddMomentLike(ctx context.Context, req *v1.AddMomentLikeReq) error {
 	var (
 		count       int = 0
 		cancelCount int = 0
@@ -181,7 +181,7 @@ func (c *communityDomainService) AddMomentLike(ctx context.Context, req *v1.AddM
 	return nil
 }
 
-func (c *communityDomainService) AddMomentComment(ctx context.Context, req *v1.AddMomentCommentReq) error {
+func (c *communityService) AddMomentComment(ctx context.Context, req *v1.AddMomentCommentReq) error {
 
 	var (
 		count int = 1
@@ -238,7 +238,7 @@ func (c *communityDomainService) AddMomentComment(ctx context.Context, req *v1.A
 	return nil
 }
 
-func (c *communityDomainService) GetMomentCommentList(ctx context.Context, req *v1.MomentCommentListReq) []v1.MomentCommentListResp {
+func (c *communityService) GetMomentCommentList(ctx context.Context, req *v1.MomentCommentListReq) []v1.MomentCommentListResp {
 
 	comments, err := c.repo.SelectMomentComment(ctx, req)
 	if err != nil {
@@ -270,8 +270,8 @@ func (c *communityDomainService) GetMomentCommentList(ctx context.Context, req *
 	return resp
 }
 
-func NewCommunityDomainService(d *Service, rep repository.CommunityRepository) CommunityDomainService {
-	return &communityDomainService{
+func NewCommunityService(d *Service, rep repository.CommunityRepository) CommunityService {
+	return &communityService{
 		Service: d,
 		repo:    rep,
 	}

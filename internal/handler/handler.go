@@ -4,20 +4,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ljinf/im_server_standalone/pkg/jwt"
 	"github.com/ljinf/im_server_standalone/pkg/log"
+	"github.com/spf13/viper"
 )
 
 type Handler struct {
 	logger *log.Logger
 	jwt    *jwt.JWT
+	conf   *viper.Viper
 }
 
 func NewHandler(
 	logger *log.Logger,
 	j *jwt.JWT,
+	conf *viper.Viper,
 ) *Handler {
 	return &Handler{
 		logger: logger,
 		jwt:    j,
+		conf:   conf,
 	}
 }
 func GetUserIdFromCtx(ctx *gin.Context) string {

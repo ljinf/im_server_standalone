@@ -27,7 +27,7 @@ import (
 
 func NewWire(viperViper *viper.Viper, logger *log.Logger, pool *ants.Pool) (*app.App, func(), error) {
 	jwtJWT := jwt.NewJwt(viperViper)
-	handlerHandler := handler.NewHandler(logger, jwtJWT)
+	handlerHandler := handler.NewHandler(logger, jwtJWT, viperViper)
 	client := cache.NewRedis(viperViper)
 	cacheCache := cache.NewCache(client)
 	db := repository.NewDB(viperViper, logger)
@@ -47,7 +47,11 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger, pool *ants.Pool) (*app
 	relationshipService := service.NewRelationshipService(serviceService, relationshipRepository, userRepository)
 	relationshipHandler := handler.NewRelationshipHandler(handlerHandler, relationshipService, chatService)
 	chatHandler := handler.NewChatHandler(handlerHandler, chatService, websocketService)
-	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler, webSocketHandler, relationshipHandler, chatHandler)
+	fileHandler := handler.NewFileHandler(handlerHandler)
+	communityRepository := repository.NewCommunityRepository(repositoryRepository)
+	communityService := service.NewCommunityService(serviceService, communityRepository)
+	communityHandler := handler.NewCommunityHandler(handlerHandler, communityService)
+	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler, webSocketHandler, relationshipHandler, chatHandler, fileHandler, communityHandler)
 	job := server.NewJob(logger)
 	appApp := newApp(httpServer, job)
 	return appApp, func() {
@@ -56,11 +60,11 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger, pool *ants.Pool) (*app
 
 // wire.go:
 
-var repositorySet = wire.NewSet(repository.NewDB, cache.NewRedis, cache.NewCache, repository.NewRepository, repository.NewTransaction, repository.NewUserRepository, repository.NewRelationshipRepository, repository.NewChatRepository)
+var repositorySet = wire.NewSet(repository.NewDB, cache.NewRedis, cache.NewCache, repository.NewRepository, repository.NewTransaction, repository.NewUserRepository, repository.NewRelationshipRepository, repository.NewChatRepository, repository.NewCommunityRepository)
 
-var serviceSet = wire.NewSet(service.NewService, service.NewUserService, service.NewWebsocketService, service.NewRelationshipService, service.NewChatService)
+var serviceSet = wire.NewSet(service.NewService, service.NewUserService, service.NewWebsocketService, service.NewRelationshipService, service.NewChatService, service.NewCommunityService)
 
-var handlerSet = wire.NewSet(handler.NewHandler, handler.NewUserHandler, handler.NewWebSocketHandler, handler.NewRelationshipHandler, handler.NewChatHandler)
+var handlerSet = wire.NewSet(handler.NewHandler, handler.NewUserHandler, handler.NewWebSocketHandler, handler.NewRelationshipHandler, handler.NewChatHandler, handler.NewFileHandler, handler.NewCommunityHandler)
 
 var serverSet = wire.NewSet(server.NewHTTPServer, server.NewJob, ws.NewWsServer)
 

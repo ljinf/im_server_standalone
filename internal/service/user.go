@@ -126,7 +126,8 @@ func (s *userService) UpdateRegisterInfo(ctx context.Context, userId string, req
 func (s *userService) GetProfile(ctx context.Context, userId string) (*v1.GetProfileResponseData, error) {
 	user, err := s.userRepo.GetAccountInfoByID(ctx, userId)
 	if err != nil {
-		return nil, err
+		s.logger.Error(err.Error(), zap.Any("GetAccountInfoByID", userId))
+		return nil, v1.ErrInternalServerError
 	}
 
 	return &v1.GetProfileResponseData{

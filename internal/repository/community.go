@@ -5,6 +5,7 @@ import (
 	"errors"
 	v1 "github.com/ljinf/im_server_standalone/api/v1"
 	"github.com/ljinf/im_server_standalone/internal/model"
+	"github.com/ljinf/im_server_standalone/pkg/contants"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"strings"
@@ -14,7 +15,7 @@ type CommunityRepository interface {
 	//用户时刻
 	CreateCommunityMoment(ctx context.Context, req *model.CommunityMoment) error
 	UpdateCommunityMoment(ctx context.Context, req *model.CommunityMoment) error
-	SelectCommunityMomentList(ctx context.Context, params *v1.GetMomentListReq) ([]model.CommunityMomentResp, error)
+	SelectCommunityMomentList(ctx context.Context, params *v1.MomentListReq) ([]model.CommunityMomentResp, error)
 
 	//点赞
 	CreateMomentLike(ctx context.Context, req *model.MomentLike) error
@@ -45,7 +46,7 @@ func (r *communityRepository) UpdateCommunityMoment(ctx context.Context, req *mo
 	return r.DB(ctx).Where("user_id=? and moment_id=?").Updates(req).Error
 }
 
-func (r *communityRepository) SelectCommunityMomentList(ctx context.Context, params *v1.GetMomentListReq) ([]model.CommunityMomentResp, error) {
+func (r *communityRepository) SelectCommunityMomentList(ctx context.Context, params *v1.MomentListReq) ([]model.CommunityMomentResp, error) {
 
 	if len(params.WhereUser) > 0 {
 		return r.selectUserMomentList(ctx, params)
@@ -55,31 +56,39 @@ func (r *communityRepository) SelectCommunityMomentList(ctx context.Context, par
 }
 
 // 公共时刻
-func (r *communityRepository) selectPublicMomentList(ctx context.Context, params *v1.GetMomentListReq) ([]model.CommunityMomentResp, error) {
+func (r *communityRepository) selectPublicMomentList(ctx context.Context, params *v1.MomentListReq) ([]model.CommunityMomentResp, error) {
 
 	var (
-		conds  = []string{"ml.`status`=2"}
+		conds  = []string{"ml.`public`=1", "ml.`status`=2"}
 		values = []interface{}{}
 	)
 
 	if params.CreatedAt != 0 {
-		conds = append(conds, "ml.`created_at` > ?")
+		switch params.Direct {
+		case contants.DirectLessThan:
+			conds = append(conds, "ml.`created_at` < ?")
+			break
+		case contants.DirectGreaterThan:
+			conds = append(conds, "ml.`created_at` > ?")
+			break
+		}
+
 		values = append(values, params.CreatedAt)
 	}
 
 	var list []model.CommunityMomentResp
 
 	querySql := "SELECT ml.`user_id`,ml.`moment_id`,ml.`content`,ml.`attachment`,ml.`attachment_type`,ml.`public`,ml.`status`,ml.`created_at`,mc.`like_count`,mc.`like_cancel_count`,mc.`comment_count` " +
-		"FROM `bs_community_moment_list` ml LEFT JOIN `bs_moment_count_list` mc ON mc.`moment_id`=ml.`moment_id` " +
+		"FROM `community_moment_list` ml LEFT JOIN `moment_count_list` mc ON mc.`moment_id`=ml.`moment_id` " +
 		" WHERE " + strings.Join(conds, " and ") +
-		" ORDER BY ml.`id` DESC LIMIT ? OFFSET ?"
-	err := r.DB(ctx).Raw(querySql, append(values, params.PageSize, (params.PageNum-1)*params.PageSize)...).Find(&list).Error
+		" ORDER BY ml.`id` DESC LIMIT ?"
+	err := r.DB(ctx).Raw(querySql, append(values, params.PageSize)...).Find(&list).Error
 
 	return list, err
 }
 
 // 个人时刻
-func (r *communityRepository) selectUserMomentList(ctx context.Context, params *v1.GetMomentListReq) ([]model.CommunityMomentResp, error) {
+func (r *communityRepository) selectUserMomentList(ctx context.Context, params *v1.MomentListReq) ([]model.CommunityMomentResp, error) {
 
 	var (
 		conds  = []string{"ml.`user_id` = ?"}
@@ -94,7 +103,7 @@ func (r *communityRepository) selectUserMomentList(ctx context.Context, params *
 	var list []model.CommunityMomentResp
 
 	querySql := "SELECT ml.`user_id`,ml.`moment_id`,ml.`content`,ml.`attachment`,ml.`attachment_type`,ml.`public`,ml.`status`,ml.`created_at`,mc.`like_count`,mc.`like_cancel_count`,mc.`comment_count` " +
-		"FROM `bs_community_moment_list` ml LEFT JOIN `bs_moment_count_list` mc ON mc.`moment_id`=ml.`moment_id` " +
+		"FROM `community_moment_list` ml LEFT JOIN `moment_count_list` mc ON mc.`moment_id`=ml.`moment_id` " +
 		" WHERE " + strings.Join(conds, " and ") +
 		" ORDER BY ml.`moment_id` DESC LIMIT ? OFFSET ?"
 	err := r.DB(ctx).Raw(querySql, append(values, params.PageSize, (params.PageNum-1)*params.PageSize)...).Find(&list).Error
@@ -145,7 +154,7 @@ func (r *communityRepository) SelectMomentComment(ctx context.Context, params *v
 
 	querySql := "SELECT mc.`id`,mc.`comment_id`,mc.`parent_id`,mc.`moment_id`,mc.`user_id`,mc.`reply_id`,mc.`content`,mc.`status`,mc.`created_at`," +
 		"IFNULL(cc.`like_count`,0)`like_count`,IFNULL(cc.`like_cancel_count`,0)`like_cancel_count`,IFNULL(cc.`comment_count`,0)`comment_count` " +
-		"FROM `bs_moment_comment_list` mc LEFT JOIN `bs_moment_comment_count` cc ON cc.`comment_id`=mc.`comment_id` " +
+		"FROM `moment_comment_list` mc LEFT JOIN `moment_comment_count_list` cc ON cc.`comment_id`=mc.`comment_id` " +
 		"WHERE " + strings.Join(conds, " and ") + " LIMIT ? OFFSET ?"
 
 	err := r.DB(ctx).Raw(querySql, append(values, params.PageSize, (params.PageNum-1)*params.PageSize)...).Find(&list).Error

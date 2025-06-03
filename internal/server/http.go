@@ -22,6 +22,8 @@ func NewHTTPServer(
 	wsHandler handler.WebSocketHandler,
 	relationHandler *handler.RelationshipHandler,
 	chatHandler *handler.ChatHandler,
+	fileHandler handler.FileHandler,
+	communityHandler handler.CommunityHandler,
 ) *http.Server {
 	gin.SetMode(gin.DebugMode)
 	s := http.NewServer(
@@ -62,6 +64,8 @@ func NewHTTPServer(
 		{
 			noAuthRouter.POST("/register", userHandler.Register)
 			noAuthRouter.POST("/login", userHandler.Login)
+			//可通过 http://localhost:8080/static/css/style.css 访问 ./xx/css/style.css 文件。
+			noAuthRouter.Static("/static", conf.GetString("assets.dir")) // 将 ./xx 目录映射到 /static 路径
 		}
 		// Non-strict permission routing group
 		noStrictAuthRouter := v1.Group("/").Use(middleware.NoStrictAuth(jwt, logger))
@@ -74,6 +78,7 @@ func NewHTTPServer(
 		strictAuthRouter := v1.Group("/").Use(middleware.StrictAuth(jwt, logger))
 		{
 			strictAuthRouter.PUT("/user", userHandler.UpdateProfile)
+			strictAuthRouter.POST("/upload", fileHandler.UploadImage)
 		}
 
 		relationGroup := v1.Group("/relationship").Use(middleware.StrictAuth(jwt, logger))
@@ -100,6 +105,29 @@ func NewHTTPServer(
 			chatGroup.POST("/msg/list", chatHandler.GetConversationMsgList) //会话消息链
 
 			chatGroup.POST("/report/msg/read", chatHandler.ReportReadMsgSeq)
+		}
+
+		//社区相关
+
+		communityGroup := v1.Group("/community")
+		{
+			// Non-strict permission routing group
+			noStrictCommunityGroup := communityGroup.Group("/").Use(middleware.NoStrictAuth(jwt, logger))
+			{
+				noStrictCommunityGroup.POST("/moment/list", communityHandler.GetMomentList)
+				noStrictCommunityGroup.POST("/comment/list", communityHandler.GetMomentCommentList)
+			}
+
+			// Strict permission routing group
+			strictCommunityGroup := communityGroup.Group("/").Use(middleware.StrictAuth(jwt, logger))
+			{
+				strictCommunityGroup.POST("/moment/add", communityHandler.AddMoment)
+				strictCommunityGroup.POST("/moment/edit", communityHandler.EditMoment)
+				strictCommunityGroup.POST("/moment/like", communityHandler.AddMomentLike)
+
+				strictCommunityGroup.POST("/comment/add", communityHandler.AddMomentComment)
+				strictCommunityGroup.POST("/comment/like", communityHandler.LikeMomentComment)
+			}
 		}
 	}
 

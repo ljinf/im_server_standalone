@@ -17,4 +17,8 @@ var (
 	// 申请关系
 	ErrAddApplyFriendshipFailed = newError(2001, "申请失败")
 	ErrCreateRelationshipFailed = newError(2002, "添加好友失败")
+
+	ErrFileUploadFiled   = newError(10000008, "文件上传失败")
+	ErrSaveFileFiled     = newError(10000009, "文件保存失败")
+	ErrNotAllowedFileExt = newError(10000010, "不支持的图片格式")
 )

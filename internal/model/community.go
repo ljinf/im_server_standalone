@@ -104,7 +104,7 @@ type MomentCommentCount struct {
 }
 
 func (c *MomentCommentCount) TableName() string {
-	return "moment_comment_count"
+	return "moment_comment_count_list"
 }
 
 type CommunityMomentResp struct {

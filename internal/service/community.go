@@ -8,6 +8,7 @@ import (
 	"github.com/ljinf/im_server_standalone/internal/repository"
 	"github.com/ljinf/im_server_standalone/pkg/contants"
 	"github.com/ljinf/im_server_standalone/pkg/util"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -15,7 +16,7 @@ type CommunityService interface {
 	//时刻
 	AddMoment(ctx context.Context, req *v1.AddMomentReq) error
 	EditMoment(ctx context.Context, req *v1.AddMomentReq) error
-	GetMomentList(ctx context.Context, req *v1.MomentListReq) []model.CommunityMomentResp
+	GetMomentList(ctx context.Context, req *v1.MomentListReq) []v1.MomentListResp
 
 	//点赞
 	AddMomentLike(ctx context.Context, req *v1.AddMomentLikeReq) error
@@ -43,9 +44,8 @@ func (c *communityService) AddMomentCommentLike(ctx context.Context, req *v1.Add
 		Status:    req.Status,
 		CreatedAt: time.Now().Unix(),
 	}); err != nil {
-		//c.logger.Error("CreateCommentLikeErr", "err", err.Error())
-		//return errcode.ErrServer
-		return err
+		c.logger.Error(err.Error(), zap.Any("CreateCommentLike", req))
+		return v1.ErrInternalServerError
 	}
 
 	switch req.Status {
@@ -63,7 +63,7 @@ func (c *communityService) AddMomentCommentLike(ctx context.Context, req *v1.Add
 		LikeCount:       count,
 	}
 	if err := c.repo.CreateMomentCommentCount(ctx, &countInfo); err != nil {
-		//log.Error(ctx, "CreateMomentCommentCountErr", "err", err.Error())
+		c.logger.Error(err.Error(), zap.Any("CreateMomentCommentCountErr", countInfo))
 	}
 
 	return nil
@@ -72,9 +72,8 @@ func (c *communityService) AddMomentCommentLike(ctx context.Context, req *v1.Add
 func (c *communityService) AddMoment(ctx context.Context, req *v1.AddMomentReq) error {
 	momentId, err := c.sid.GenUint64()
 	if err != nil {
-		//log.Error(ctx, "SidGenUint64Err", "err", err.Error())
-		//return errcode.ErrServer
-		return err
+		c.logger.Error(err.Error(), zap.Any("GenUint64", ""))
+		return v1.ErrInternalServerError
 	}
 	moment := model.CommunityMoment{
 		UserId:         req.UserId,
@@ -89,9 +88,8 @@ func (c *communityService) AddMoment(ctx context.Context, req *v1.AddMomentReq) 
 
 	err = c.repo.CreateCommunityMoment(ctx, &moment)
 	if err != nil {
-		//log.Error(ctx, "CreateCommunityMomentErr", "err", err.Error())
-		//return errcode.ErrServer
-		return err
+		c.logger.Error(err.Error(), zap.Any("CreateCommunityMoment", ""))
+		return v1.ErrInternalServerError
 	}
 
 	//todo 审核内容
@@ -109,24 +107,23 @@ func (c *communityService) EditMoment(ctx context.Context, req *v1.AddMomentReq)
 
 	err := c.repo.UpdateCommunityMoment(ctx, &moment)
 	if err != nil {
-		//log.Error(ctx, "UpdateCommunityMoment", "err", err.Error())
-		//return errcode.ErrServer
-		return err
+		c.logger.Error(err.Error(), zap.Any("UpdateCommunityMoment", ""))
+		return v1.ErrInternalServerError
 	}
 	return nil
 }
 
-func (c *communityService) GetMomentList(ctx context.Context, req *v1.MomentListReq) []model.CommunityMomentResp {
+func (c *communityService) GetMomentList(ctx context.Context, req *v1.MomentListReq) []v1.MomentListResp {
 
 	list, err := c.repo.SelectCommunityMomentList(ctx, req)
 	if err != nil {
-		//log.Error(ctx, "SelectCommunityMomentListErr", "err", err.Error())
+		c.logger.Error(err.Error(), zap.Any("SelectCommunityMomentList", ""))
 	}
 
 	if len(list) > 0 {
 		likes, err := c.repo.SelectUserMomentLikeList(ctx, req.UserId, list[len(list)-1].CreatedAt)
 		if err != nil {
-			//log.Error(ctx, "SelectUserMomentLikeListErr", "err", err.Error())
+			c.logger.Error(err.Error(), zap.Any("SelectUserMomentLikeList", ""))
 		}
 		for index := range list {
 			for _, v := range likes {
@@ -138,7 +135,12 @@ func (c *communityService) GetMomentList(ctx context.Context, req *v1.MomentList
 		}
 	}
 
-	return list
+	resp := make([]v1.MomentListResp, 0, len(list))
+	if err = util.CopyProperties(&resp, list); err != nil {
+		c.logger.Error(err.Error(), zap.Any("CopyProperties", ""))
+	}
+
+	return resp
 }
 
 func (c *communityService) AddMomentLike(ctx context.Context, req *v1.AddMomentLikeReq) error {
@@ -169,13 +171,12 @@ func (c *communityService) AddMomentLike(ctx context.Context, req *v1.AddMomentL
 
 	//这里不用事务，即使计数错误也不影响时刻的添加
 	if err := c.repo.CreateMomentLike(ctx, &momentLike); err != nil {
-		//log.Error(ctx, "CreateMomentLikeErr", "err", err.Error())
-		//return errcode.ErrServer
-		return err
+		c.logger.Error(err.Error(), zap.Any("CreateMomentLike", ""))
+		return v1.ErrInternalServerError
 	}
 
 	if err := c.repo.CreateMomentCount(ctx, &likeCount); err != nil {
-		//log.Error(ctx, "CreateMomentCountErr", "err", err.Error())
+		c.logger.Error(err.Error(), zap.Any("CreateMomentCount", ""))
 	}
 
 	return nil
@@ -189,9 +190,8 @@ func (c *communityService) AddMomentComment(ctx context.Context, req *v1.AddMome
 
 	commentId, err := c.sid.GenUint64()
 	if err != nil {
-		//log.Error(ctx, "SidGenUint64Err", "err", err.Error())
-		//return errcode.ErrServer
-		return err
+		c.logger.Error(err.Error(), zap.Any("AddMomentComment", ""))
+		return v1.ErrInternalServerError
 	}
 
 	commentInfo := &model.MomentComment{
@@ -207,9 +207,8 @@ func (c *communityService) AddMomentComment(ctx context.Context, req *v1.AddMome
 	}
 
 	if err = c.repo.CreateMomentComment(ctx, commentInfo); err != nil {
-		//log.Error(ctx, "CreateMomentCommentErr", "err", err.Error())
-		//return errcode.ErrServer
-		return err
+		c.logger.Error(err.Error(), zap.Any("AddMomentComment", ""))
+		return v1.ErrInternalServerError
 	}
 
 	//计数统计
@@ -232,7 +231,7 @@ func (c *communityService) AddMomentComment(ctx context.Context, req *v1.AddMome
 
 		return nil
 	}); err != nil {
-		//log.Error(ctx, "CreateMomentCountErr", "err", err.Error())
+		c.logger.Error(err.Error(), zap.Any("AddMomentComment", ""))
 	}
 
 	return nil
@@ -242,20 +241,21 @@ func (c *communityService) GetMomentCommentList(ctx context.Context, req *v1.Mom
 
 	comments, err := c.repo.SelectMomentComment(ctx, req)
 	if err != nil {
-		//log.Error(ctx, "SelectMomentCommentErr", "err", err.Error())
+		c.logger.Error(err.Error(), zap.Any("GetMomentCommentList", req))
 		return []v1.MomentCommentListResp{}
 	}
 
 	resp := make([]v1.MomentCommentListResp, 0, len(comments))
 	if err = util.CopyProperties(&resp, comments); err != nil {
-		//log.Error(ctx, errcode.ErrCoverData.WithCause(err).Error())
+		c.logger.Error(err.Error(), zap.Any("GetMomentCommentList", req))
 	}
 
 	if len(resp) > 0 {
 		//点赞评论的回显
 		likes, err := c.repo.SelectUserCommentLikeList(ctx, req.UserId, resp[0].CreatedAt)
 		if err != nil {
-			//log.Error(ctx, "SelectUserCommentLikeList", "err", err.Error())
+			c.logger.Error(err.Error(), zap.Any("SelectUserCommentLikeList",
+				fmt.Sprintf("%v %v", req.UserId, resp[0].CreatedAt)))
 		}
 		for index := range likes {
 			for _, v := range resp {

@@ -33,6 +33,11 @@ const (
 	DefaultMsgListSize = 100
 )
 
+const (
+	DirectLessThan    = "lt"
+	DirectGreaterThan = "gt"
+)
+
 // social
 const (
 

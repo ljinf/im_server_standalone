@@ -5,6 +5,7 @@ import (
 	"errors"
 	v1 "github.com/ljinf/im_server_standalone/api/v1"
 	"github.com/ljinf/im_server_standalone/internal/model"
+	"github.com/ljinf/im_server_standalone/pkg/contants"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"strings"
@@ -58,12 +59,20 @@ func (r *communityRepository) SelectCommunityMomentList(ctx context.Context, par
 func (r *communityRepository) selectPublicMomentList(ctx context.Context, params *v1.MomentListReq) ([]model.CommunityMomentResp, error) {
 
 	var (
-		conds  = []string{"ml.`status`=2"}
+		conds  = []string{"ml.`public`=1", "ml.`status`=2"}
 		values = []interface{}{}
 	)
 
 	if params.CreatedAt != 0 {
-		conds = append(conds, "ml.`created_at` > ?")
+		switch params.Direct {
+		case contants.DirectLessThan:
+			conds = append(conds, "ml.`created_at` < ?")
+			break
+		case contants.DirectGreaterThan:
+			conds = append(conds, "ml.`created_at` > ?")
+			break
+		}
+
 		values = append(values, params.CreatedAt)
 	}
 
@@ -72,8 +81,8 @@ func (r *communityRepository) selectPublicMomentList(ctx context.Context, params
 	querySql := "SELECT ml.`user_id`,ml.`moment_id`,ml.`content`,ml.`attachment`,ml.`attachment_type`,ml.`public`,ml.`status`,ml.`created_at`,mc.`like_count`,mc.`like_cancel_count`,mc.`comment_count` " +
 		"FROM `community_moment_list` ml LEFT JOIN `moment_count_list` mc ON mc.`moment_id`=ml.`moment_id` " +
 		" WHERE " + strings.Join(conds, " and ") +
-		" ORDER BY ml.`id` DESC LIMIT ? OFFSET ?"
-	err := r.DB(ctx).Raw(querySql, append(values, params.PageSize, (params.PageNum-1)*params.PageSize)...).Find(&list).Error
+		" ORDER BY ml.`id` DESC LIMIT ?"
+	err := r.DB(ctx).Raw(querySql, append(values, params.PageSize)...).Find(&list).Error
 
 	return list, err
 }
@@ -145,7 +154,7 @@ func (r *communityRepository) SelectMomentComment(ctx context.Context, params *v
 
 	querySql := "SELECT mc.`id`,mc.`comment_id`,mc.`parent_id`,mc.`moment_id`,mc.`user_id`,mc.`reply_id`,mc.`content`,mc.`status`,mc.`created_at`," +
 		"IFNULL(cc.`like_count`,0)`like_count`,IFNULL(cc.`like_cancel_count`,0)`like_cancel_count`,IFNULL(cc.`comment_count`,0)`comment_count` " +
-		"FROM `moment_comment_list` mc LEFT JOIN `moment_comment_count` cc ON cc.`comment_id`=mc.`comment_id` " +
+		"FROM `moment_comment_list` mc LEFT JOIN `moment_comment_count_list` cc ON cc.`comment_id`=mc.`comment_id` " +
 		"WHERE " + strings.Join(conds, " and ") + " LIMIT ? OFFSET ?"
 
 	err := r.DB(ctx).Raw(querySql, append(values, params.PageSize, (params.PageNum-1)*params.PageSize)...).Find(&list).Error

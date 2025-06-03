@@ -27,7 +27,8 @@ type CommunityHandler interface {
 
 type communityHandler struct {
 	*Handler
-	srv service.CommunityService
+	srv     service.CommunityService
+	userSrv service.UserService
 }
 
 func (h *communityHandler) AddMoment(ctx *gin.Context) {
@@ -87,6 +88,13 @@ func (h *communityHandler) GetMomentList(ctx *gin.Context) {
 	param.PageSize = int(pageInfo.PageSize)
 
 	momentList := h.srv.GetMomentList(ctx, &param)
+
+	for index := range momentList {
+		if profile, err := h.userSrv.GetProfile(ctx, momentList[index].UserId); err == nil {
+			momentList[index].UserInfo = profile
+		}
+	}
+
 	v1.HandleSuccess(ctx, momentList)
 }
 
@@ -129,7 +137,7 @@ func (h *communityHandler) AddMomentComment(ctx *gin.Context) {
 func (h *communityHandler) GetMomentCommentList(ctx *gin.Context) {
 	var param v1.MomentCommentListReq
 	if err := ctx.ShouldBind(&param); err != nil {
-		h.logger.Error(err.Error(), zap.Any("AddMoment", ""))
+		h.logger.Error(err.Error(), zap.Any("GetMomentCommentList", ""))
 		v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)
 		return
 	}
@@ -162,9 +170,10 @@ func (h *communityHandler) LikeMomentComment(ctx *gin.Context) {
 	v1.HandleSuccess(ctx, nil)
 }
 
-func NewCommunityHandler(h *Handler, srv service.CommunityService) CommunityHandler {
+func NewCommunityHandler(h *Handler, srv service.CommunityService, userSrv service.UserService) CommunityHandler {
 	return &communityHandler{
 		Handler: h,
 		srv:     srv,
+		userSrv: userSrv,
 	}
 }

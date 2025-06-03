@@ -50,7 +50,7 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger, pool *ants.Pool) (*app
 	fileHandler := handler.NewFileHandler(handlerHandler)
 	communityRepository := repository.NewCommunityRepository(repositoryRepository)
 	communityService := service.NewCommunityService(serviceService, communityRepository)
-	communityHandler := handler.NewCommunityHandler(handlerHandler, communityService)
+	communityHandler := handler.NewCommunityHandler(handlerHandler, communityService, userService)
 	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler, webSocketHandler, relationshipHandler, chatHandler, fileHandler, communityHandler)
 	job := server.NewJob(logger)
 	appApp := newApp(httpServer, job)

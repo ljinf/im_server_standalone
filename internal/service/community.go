@@ -22,7 +22,7 @@ type CommunityService interface {
 	AddMomentLike(ctx context.Context, req *v1.AddMomentLikeReq) error
 
 	//评论
-	AddMomentComment(ctx context.Context, req *v1.AddMomentCommentReq) error
+	AddMomentComment(ctx context.Context, req *v1.AddMomentCommentReq) (*v1.MomentCommentListResp, error)
 	AddMomentCommentLike(ctx context.Context, req *v1.AddMomentCommentLikeReq) error
 	GetMomentCommentList(ctx context.Context, req *v1.MomentCommentListReq) []v1.MomentCommentListResp
 }
@@ -182,7 +182,7 @@ func (c *communityService) AddMomentLike(ctx context.Context, req *v1.AddMomentL
 	return nil
 }
 
-func (c *communityService) AddMomentComment(ctx context.Context, req *v1.AddMomentCommentReq) error {
+func (c *communityService) AddMomentComment(ctx context.Context, req *v1.AddMomentCommentReq) (*v1.MomentCommentListResp, error) {
 
 	var (
 		count int = 1
@@ -191,7 +191,7 @@ func (c *communityService) AddMomentComment(ctx context.Context, req *v1.AddMome
 	commentId, err := c.sid.GenUint64()
 	if err != nil {
 		c.logger.Error(err.Error(), zap.Any("AddMomentComment", ""))
-		return v1.ErrInternalServerError
+		return nil, v1.ErrInternalServerError
 	}
 
 	commentInfo := &model.MomentComment{
@@ -208,7 +208,7 @@ func (c *communityService) AddMomentComment(ctx context.Context, req *v1.AddMome
 
 	if err = c.repo.CreateMomentComment(ctx, commentInfo); err != nil {
 		c.logger.Error(err.Error(), zap.Any("AddMomentComment", ""))
-		return v1.ErrInternalServerError
+		return nil, v1.ErrInternalServerError
 	}
 
 	//计数统计
@@ -234,7 +234,20 @@ func (c *communityService) AddMomentComment(ctx context.Context, req *v1.AddMome
 		c.logger.Error(err.Error(), zap.Any("AddMomentComment", ""))
 	}
 
-	return nil
+	return &v1.MomentCommentListResp{
+		CommentId:       commentInfo.CommentId,
+		ParentId:        commentInfo.ParentId,
+		MomentId:        commentInfo.MomentId,
+		UserId:          commentInfo.UserId,
+		ReplyId:         commentInfo.ReplyId,
+		Content:         commentInfo.Content,
+		LikeCount:       0,
+		LikeStatus:      0,
+		LikeCancelCount: 0,
+		CommentCount:    0,
+		Status:          commentInfo.Status,
+		CreatedAt:       commentInfo.CreatedAt,
+	}, nil
 }
 
 func (c *communityService) GetMomentCommentList(ctx context.Context, req *v1.MomentCommentListReq) []v1.MomentCommentListResp {

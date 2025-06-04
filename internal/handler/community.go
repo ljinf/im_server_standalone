@@ -39,6 +39,12 @@ func (h *communityHandler) AddMoment(ctx *gin.Context) {
 		return
 	}
 
+	//文字，图片不能同时空
+	if len(param.Content) == 0 && len(param.Attachment) == 0 {
+		v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)
+		return
+	}
+
 	if len(param.Attachment) > 0 && param.AttachmentType == 0 {
 		v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)
 		return
@@ -126,12 +132,13 @@ func (h *communityHandler) AddMomentComment(ctx *gin.Context) {
 
 	param.UserId = GetUserIdFromCtx(ctx)
 
-	if err := h.srv.AddMomentComment(ctx, &param); err != nil {
+	resp, err := h.srv.AddMomentComment(ctx, &param)
+	if err != nil {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrInternalServerError, nil)
 		return
 	}
 
-	v1.HandleSuccess(ctx, nil)
+	v1.HandleSuccess(ctx, resp)
 }
 
 func (h *communityHandler) GetMomentCommentList(ctx *gin.Context) {

@@ -3,13 +3,13 @@ package v1
 import "encoding/json"
 
 type AddMomentReq struct {
-	MomentId       string          `json:"moment_id"`                  //时刻ID
-	UserId         string          `json:"user_id"`                    //发送者ID
-	Content        string          `json:"content" binding:"required"` //描述内容
-	Attachment     json.RawMessage `json:"attachment"`                 //图片/音频/视频的url集合
-	AttachmentType int             `json:"attachment_type"`            //类型 1-图片  2-音频  3-视频文件
-	Public         int             `json:"public" binding:"required"`  //可见范围 1-公共  2-私密
-	Status         int             `json:"status"`                     //状态，1-审核中 2-正常 3-违规 4-删除
+	MomentId       string          `json:"moment_id"`                 //时刻ID
+	UserId         string          `json:"user_id"`                   //发送者ID
+	Content        string          `json:"content"`                   //描述内容
+	Attachment     json.RawMessage `json:"attachment"`                //图片/音频/视频的url集合
+	AttachmentType int             `json:"attachment_type"`           //类型 1-图片  2-音频  3-视频文件
+	Public         int             `json:"public" binding:"required"` //可见范围 1-公共  2-私密
+	Status         int             `json:"status"`                    //状态，1-审核中 2-正常 3-违规 4-删除
 }
 
 type MomentListReq struct {

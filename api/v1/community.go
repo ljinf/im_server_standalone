@@ -37,7 +37,7 @@ type MomentListResp struct {
 
 	LikeCount       int `json:"like_count"`        //点赞数
 	LikeCancelCount int `json:"like_cancel_count"` //点赞取消数
-	LikeStatus      int `json:"like_status"`       //点赞状态
+	LikeStatus      int `json:"like_status"`       //点赞状态  0-否  1-是
 	CommentCount    int `json:"comment_count"`     //评论数
 }
 

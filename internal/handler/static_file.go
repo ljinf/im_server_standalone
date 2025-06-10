@@ -61,7 +61,7 @@ func (h *fileHandler) UploadImage(ctx *gin.Context) {
 
 	// 指定存储路径
 	uploadDir := h.conf.GetString("assets.dir")
-	fileName := fmt.Sprintf("%v_%v", size, generateRandomFilename(file.Filename))
+	fileName := fmt.Sprintf("%v_%v", strings.ToUpper(size), generateRandomFilename(file.Filename))
 	dst := filepath.Join(uploadDir, subDir, fileName)
 
 	// 保存文件

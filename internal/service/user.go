@@ -131,12 +131,13 @@ func (s *userService) GetProfile(ctx context.Context, userId string) (*v1.GetPro
 	}
 
 	return &v1.GetProfileResponseData{
-		UserId:   user.UserId,
-		NickName: user.NickName,
-		Phone:    user.Phone,
-		Email:    user.Email,
-		Avatar:   user.Avatar,
-		Gender:   user.Gender,
+		UserId:        user.UserId,
+		NickName:      user.NickName,
+		Phone:         user.Phone,
+		Email:         user.Email,
+		Avatar:        user.Avatar,
+		SelfSignature: user.SelfSignature,
+		Gender:        user.Gender,
 	}, nil
 }
 
@@ -169,11 +170,12 @@ func (s *userService) GetProfileByEmail(ctx context.Context, email string) (*v1.
 	}
 
 	return &v1.GetProfileResponseData{
-		UserId:   user.UserId,
-		NickName: user.NickName,
-		Phone:    user.Phone,
-		Email:    user.Email,
-		Avatar:   user.Avatar,
-		Gender:   user.Gender,
+		UserId:        user.UserId,
+		NickName:      user.NickName,
+		Phone:         user.Phone,
+		Email:         user.Email,
+		Avatar:        user.Avatar,
+		SelfSignature: user.SelfSignature,
+		Gender:        user.Gender,
 	}, nil
 }

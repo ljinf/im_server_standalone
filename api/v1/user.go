@@ -29,12 +29,13 @@ type UpdateProfileRequest struct {
 	Gender   int    `json:"gender"`    //性别
 }
 type GetProfileResponseData struct {
-	UserId   string `json:"user_id"`
-	Phone    string `json:"phone"`
-	Email    string `json:"email"`
-	NickName string `json:"nick_name"` //昵称
-	Avatar   string `json:"avatar"`    //头像
-	Gender   int    `json:"gender"`    //性别
+	UserId        string `json:"user_id"`
+	Phone         string `json:"phone"`
+	Email         string `json:"email"`
+	NickName      string `json:"nick_name"`      //昵称
+	Avatar        string `json:"avatar"`         //头像
+	SelfSignature string `json:"self_signature"` //个性签名
+	Gender        int    `json:"gender"`         //性别
 }
 type GetProfileResponse struct {
 	Response

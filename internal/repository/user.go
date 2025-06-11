@@ -114,7 +114,7 @@ func (r *userRepository) GetAccountInfoByID(ctx context.Context, userId string) 
 	}*/
 
 	var info model.AccountInfo
-	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`gender`,r.`email`,r.`phone` " +
+	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`self_signature`,u.`gender`,r.`email`,r.`phone` " +
 		"FROM `user_info` u INNER JOIN `register` r ON u.`user_id`=r.`user_id` WHERE u.`user_id`=?"
 	if err := r.DB(ctx).Raw(querySql, userId).Scan(&info).Error; err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func (r *userRepository) GetAccountInfoByID(ctx context.Context, userId string) 
 
 func (r *userRepository) GetAccountInfoByEmail(ctx context.Context, email string) (*model.AccountInfo, error) {
 	var info model.AccountInfo
-	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`gender`,r.`email`,r.`phone` " +
+	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`self_signature`,u.`gender`,r.`email`,r.`phone` " +
 		"FROM `user_info` u INNER JOIN `register` r ON u.`user_id`=r.`user_id` WHERE r.`email`=?"
 	if err := r.DB(ctx).Raw(querySql, email).Scan(&info).Error; err != nil {
 		return nil, err

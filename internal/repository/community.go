@@ -96,8 +96,21 @@ func (r *communityRepository) selectUserMomentList(ctx context.Context, params *
 	)
 
 	if params.CreatedAt != 0 {
-		conds = append(conds, "ml.`created_at` > ?")
+		switch params.Direct {
+		case contants.DirectLessThan:
+			conds = append(conds, "ml.`created_at` < ?")
+			break
+		case contants.DirectGreaterThan:
+			conds = append(conds, "ml.`created_at` > ?")
+			break
+		}
+
 		values = append(values, params.CreatedAt)
+	}
+
+	//如果是查看别人的时刻
+	if params.UserId != params.WhereUser {
+		conds = append(conds, "ml.`public` = 1 and ml.`status` = 2")
 	}
 
 	var list []model.CommunityMomentResp

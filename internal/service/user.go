@@ -136,6 +136,7 @@ func (s *userService) GetProfile(ctx context.Context, userId string) (*v1.GetPro
 		Phone:         user.Phone,
 		Email:         user.Email,
 		Avatar:        user.Avatar,
+		Background:    user.Background,
 		SelfSignature: user.SelfSignature,
 		Gender:        user.Gender,
 	}, nil
@@ -175,6 +176,7 @@ func (s *userService) GetProfileByEmail(ctx context.Context, email string) (*v1.
 		Phone:         user.Phone,
 		Email:         user.Email,
 		Avatar:        user.Avatar,
+		Background:    user.Background,
 		SelfSignature: user.SelfSignature,
 		Gender:        user.Gender,
 	}, nil

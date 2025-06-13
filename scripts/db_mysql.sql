@@ -29,6 +29,7 @@ CREATE TABLE `user_info`
     `user_id`           bigint(20) unsigned NOT NULL COMMENT '用户id',
     `nick_name`         varchar(100) DEFAULT NULL COMMENT '昵称',
     `avatar`            varchar(255) DEFAULT NULL COMMENT '头像',
+    `background`        varchar(255) DEFAULT NULL COMMENT '个人背景',
     `gender`            tinyint(2) DEFAULT 3 COMMENT '性别 1男 2女 3未知',
     `birth_day`         varchar(50)  DEFAULT NULL COMMENT '生日',
     `self_signature`    varchar(255) DEFAULT NULL COMMENT '个性签名',
@@ -43,6 +44,9 @@ CREATE TABLE `user_info`
     KEY                 user_phone_email_pass(`user_id`,`nick_name`,`avatar`,`gender`),
     KEY                 `deleted_idx` (`deleted_at`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT '用户信息表';
+
+alter table `user_info`
+    add column `background` varchar(255) DEFAULT NULL COMMENT '个人背景' after `avatar`;
 
 -- 聊天相关
 

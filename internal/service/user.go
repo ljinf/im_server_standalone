@@ -150,6 +150,8 @@ func (s *userService) UpdateProfile(ctx context.Context, userId string, req *v1.
 
 	user.Avatar = req.Avatar
 	user.NickName = req.NickName
+	user.SelfSignature = req.SelfSignature
+	user.Background = req.Background
 
 	if user.Gender == 3 {
 		if req.Gender == 1 || req.Gender == 2 {

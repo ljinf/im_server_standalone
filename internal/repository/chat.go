@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/ljinf/im_server_standalone/internal/model"
+	"go.uber.org/zap"
 	"gorm.io/gorm/clause"
 )
 
@@ -35,6 +36,7 @@ type ChatRepository interface {
 	// 用户会话列表
 	SelectUserConversationList(ctx context.Context, userId string, version, pageNum, pageSize int64) ([]model.UserConversationList, int, error)
 	SelectConversationUsers(ctx context.Context, conversationId string) ([]model.UserInfo, error) //会话下的用户列表
+	SelectConversationMaxVersion(ctx context.Context, userId, conversationId string) int          //会话最大版本号，会话不存在则返回1
 	//会话已读序列号
 	UpdateConversationReadSeq(ctx context.Context, userId, conversationId string, seq int64) error
 }
@@ -340,4 +342,14 @@ func (r *chatRepository) UpdateConversationReadSeq(ctx context.Context, userId, 
 	querySql := "UPDATE `user_conversation_list` SET `last_read_seq`=? WHERE `user_id`=? AND `conversation_id`=?"
 
 	return r.DB(ctx).Exec(querySql, seq, userId, conversationId).Error
+}
+
+// 用户会话最大版本号
+func (r *chatRepository) SelectConversationMaxVersion(ctx context.Context, userId, conversationId string) int {
+	var version int64
+	querySql := "SELECT IFNULL(MAX(uc.`version`),0) `version` FROM `user_conversation_list` uc WHERE uc.`user_id`=?"
+	if err := r.DB(ctx).Raw(querySql, userId).Scan(&version).Error; err != nil {
+		r.logger.Error(err.Error(), zap.String("userid", userId))
+	}
+	return int(version)
 }

@@ -71,3 +71,8 @@ type UserConversationListReq struct {
 	PageNum  int64  `json:"page_num"`
 	PageSize int64  `json:"page_size"`
 }
+
+type ConversationUsersReq struct {
+	UserId         string `json:"user_id"`                                             //用户ID
+	ConversationId string `json:"conversation_id" binding:"required" example:"123456"` //会话ID
+}

@@ -24,9 +24,11 @@ type UpdateRegisterInfoRequest struct {
 }
 
 type UpdateProfileRequest struct {
-	NickName string `json:"nick_name"` //昵称
-	Avatar   string `json:"avatar"`    //头像
-	Gender   int    `json:"gender"`    //性别
+	NickName      string `json:"nick_name"`      //昵称
+	Avatar        string `json:"avatar"`         //头像
+	Gender        int    `json:"gender"`         //性别
+	Background    string `json:"background"`     //个人背景图
+	SelfSignature string `json:"self_signature"` //个性签名
 }
 type GetProfileResponseData struct {
 	UserId        string `json:"user_id"`
@@ -34,6 +36,7 @@ type GetProfileResponseData struct {
 	Email         string `json:"email"`
 	NickName      string `json:"nick_name"`      //昵称
 	Avatar        string `json:"avatar"`         //头像
+	Background    string `json:"background"`     //个人背景图
 	SelfSignature string `json:"self_signature"` //个性签名
 	Gender        int    `json:"gender"`         //性别
 }

@@ -27,6 +27,7 @@ type UserInfo struct {
 	UserId        string         `json:"user_id"`
 	NickName      string         `json:"nick_name"`      //昵称
 	Avatar        string         `json:"avatar"`         //头像
+	Background    string         `json:"background"`     //个人背景图
 	SelfSignature string         `json:"self_signature"` //个性签名
 	Gender        int            `json:"gender"`         //性别
 	Status        int            `json:"status"`         //用户状态  0:异常  1:正常
@@ -45,6 +46,7 @@ type AccountInfo struct {
 	Email         string `json:"email"`
 	NickName      string `json:"nick_name"`      //昵称
 	Avatar        string `json:"avatar"`         //头像
+	Background    string `json:"background"`     //个人背景图
 	SelfSignature string `json:"self_signature"` //个性签名
 	Gender        int    `json:"gender"`         //性别
 	Password      string `json:"password"`

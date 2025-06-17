@@ -80,6 +80,31 @@ func (h *ChatHandler) GetUserConversationList(ctx *gin.Context) {
 	v1.HandleSuccess(ctx, conversationList)
 }
 
+// 会话的所有用户
+func (h *ChatHandler) GetConversationUserList(ctx *gin.Context) {
+	userId := GetUserIdFromCtx(ctx)
+	if len(userId) == 0 {
+		v1.HandleError(ctx, http.StatusOK, v1.ErrUnauthorized, nil)
+		return
+	}
+
+	var params v1.ConversationUsersReq
+	if err := ctx.ShouldBind(&params); err != nil {
+		h.logger.Error(err.Error())
+		v1.HandleError(ctx, http.StatusOK, v1.ErrBadRequest, nil)
+		return
+	}
+
+	users, err := h.srv.GetConversationUsers(ctx, params.ConversationId)
+	if err != nil {
+		h.logger.Error(err.Error(), zap.Any("userId", userId), zap.Any("convId", params.ConversationId))
+		v1.HandleError(ctx, http.StatusOK, v1.ErrInternalServerError, nil)
+		return
+	}
+
+	v1.HandleSuccess(ctx, users)
+}
+
 // 消息列表
 // 用户消息链下的消息
 func (h *ChatHandler) GetUserMsgList(ctx *gin.Context) {

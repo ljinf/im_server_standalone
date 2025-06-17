@@ -23,7 +23,7 @@ type ChatService interface {
 	GetConversationUsers(ctx context.Context, conversationId string) ([]v1.GetProfileResponseData, error) //会话下的用户
 	EditConversationReadSeq(ctx context.Context, userId, conversationId string, seq int64) error
 	//创建会话
-	CreateConversationList(ctx context.Context, list ...*model.ConversationList) error
+	//CreateConversationList(ctx context.Context, list ...*model.ConversationList) error
 
 	//该会话最新一条消息
 	GetLastConversationMsg(ctx context.Context, conversationId string) v1.SendMsgResp
@@ -51,10 +51,10 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 		now = time.Now().Unix()
 
 		//消息在会话中的序列号，用于保证消息的顺序
-		cSeq   int64
-		uSeq   int64 //用户消息链的序列号
-		msgId  string
-		convId string
+		cSeq  int64
+		uSeq  int64 //用户消息链的序列号
+		msgId string
+		//convId string
 	)
 
 	id, err := s.sid.GenUint64()
@@ -73,48 +73,11 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 		SentAt:         now,
 	}
 
-	//会话不存在
+	//会话不存在，单聊会话ID，如果是群聊，要显式创建，所以会话id不为空
 	if len(msg.ConversationId) == 0 {
 		convs := []string{req.UserId, req.TargetId}
-		slice.Sort(convs)
-		// 单聊会话ID，如果是群聊，要显式创建，所以会话id不为空
-		convId = fmt.Sprintf("%v-%v", convs[0], convs[1])
-		msg.ConversationId = convId
-
-		if err = s.tm.Transaction(ctx, func(ctx context.Context) error {
-			// 用户会话链
-			userConversationList := make([]*model.UserConversationList, 0, 2)
-
-			conversationInfo := &model.ConversationList{
-				ConversationId: convId,
-				Type:           0,
-				Member:         2,
-				RecentMsgTime:  now,
-				CreatedAt:      now,
-			}
-			//创建会话
-			if err = s.repo.CreateConversation(ctx, conversationInfo); err != nil {
-				return err
-			}
-
-			// 接收者的会话
-			userConversationList = append(userConversationList, &model.UserConversationList{
-				UserId:         req.TargetId,
-				ConversationId: convId,
-			})
-
-			// 发送者的会话链
-			userConversationList = append(userConversationList, &model.UserConversationList{
-				UserId:         req.UserId,
-				ConversationId: convId,
-			})
-			if err = s.repo.CreateUserConversationList(ctx, userConversationList...); err != nil {
-				return err
-			}
-			return nil
-		}); err != nil {
-			s.logger.Error(err.Error(), zap.Any("create conversation", ""))
-			return nil, err
+		if msg.ConversationId, err = s.createConversationList(ctx, convs); err != nil {
+			return nil, v1.ErrInternalServerError
 		}
 	}
 
@@ -242,10 +205,47 @@ func (s *chatService) GetUserConversationList(ctx context.Context, userId string
 	}, nil
 }
 
-func (s *chatService) CreateConversationList(ctx context.Context, list ...*model.ConversationList) error {
+func (s *chatService) createConversationList(ctx context.Context, userIds []string) (convId string, err error) {
+	now := time.Now().Unix()
+	slice.Sort(userIds)
+	// 单聊会话ID
+	convId = fmt.Sprintf("%v-%v", userIds[0], userIds[1])
 
-	//TODO implement me
-	panic("implement me")
+	if err = s.tm.Transaction(ctx, func(ctx context.Context) error {
+		conversationInfo := &model.ConversationList{
+			ConversationId: convId,
+			Type:           0,
+			Member:         2,
+			RecentMsgTime:  now,
+			CreatedAt:      now,
+		}
+		//创建会话
+		if err = s.repo.CreateConversation(ctx, conversationInfo); err != nil {
+			return err
+		}
+
+		// 用户会话链
+		userConversationList := make([]*model.UserConversationList, 0, 2)
+		// 用户会话链
+		userConversationList = append(userConversationList, &model.UserConversationList{
+			UserId:         userIds[0],
+			ConversationId: convId,
+			Version:        s.repo.SelectConversationMaxVersion(ctx, userIds[0], convId) + 1, //最大版本+1
+		})
+		// 用户会话链
+		userConversationList = append(userConversationList, &model.UserConversationList{
+			UserId:         userIds[1],
+			ConversationId: convId,
+			Version:        s.repo.SelectConversationMaxVersion(ctx, userIds[1], convId) + 1,
+		})
+		if err = s.repo.CreateUserConversationList(ctx, userConversationList...); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		s.logger.Error(err.Error(), zap.Any("create conversation", userIds))
+	}
+	return
 }
 
 func (s *chatService) ReportReadMsgSeq(ctx context.Context, req *v1.ReportReadReq) error {

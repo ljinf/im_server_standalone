@@ -99,7 +99,10 @@ func NewHTTPServer(
 		chatGroup := v1.Group("/chat").Use(middleware.StrictAuth(jwt, logger))
 		{
 			chatGroup.POST("/send", chatHandler.SendChatMessage)
+			//同步会话
 			chatGroup.POST("/conversation/list", chatHandler.GetUserConversationList)
+			//会话的所有用户
+			chatGroup.POST("/conversation/users", chatHandler.GetConversationUserList)
 			//同步历史消息
 			chatGroup.POST("/msg/history/list", chatHandler.GetUserMsgList) //用户消息链
 			chatGroup.POST("/msg/list", chatHandler.GetConversationMsgList) //会话消息链

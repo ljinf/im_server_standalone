@@ -12,6 +12,8 @@ type ChatRepository interface {
 	// 会话
 	CreateConversation(ctx context.Context, req *model.ConversationList) error
 	SelectConversation(ctx context.Context, conversationId ...string) ([]model.ConversationList, error)
+	SelectConversationByOne(ctx context.Context, conversationId string) ([]model.ConversationList, error)
+	ExistConversation(ctx context.Context, conversationId string) bool
 	UpdateConversation(ctx context.Context, req *model.ConversationList) error
 
 	// 消息
@@ -66,6 +68,26 @@ func (r *chatRepository) SelectConversation(ctx context.Context, conversationId 
 	}
 
 	return list, nil
+}
+
+func (r *chatRepository) SelectConversationByOne(ctx context.Context, conversationId string) ([]model.ConversationList, error) {
+	list := make([]model.ConversationList, 0, len(conversationId))
+
+	if err := r.DB(ctx).Where("conversation_id = ?", conversationId).Find(&list).Error; err != nil {
+		return nil, err
+	}
+
+	return list, nil
+}
+
+// 会话是否存在
+func (r *chatRepository) ExistConversation(ctx context.Context, conversationId string) bool {
+	var count int64
+	if err := r.DB(ctx).Raw("SELECT COUNT(*) FROM `conversation_list` c WHERE c.`conversation_id` =?",
+		conversationId).Scan(&count).Error; err != nil {
+		r.logger.Error(err.Error(), zap.String("ExistConversation", conversationId))
+	}
+	return count > 0
 }
 
 // 群聊的会话才会更新信息，例如公告等

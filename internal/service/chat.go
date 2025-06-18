@@ -74,7 +74,7 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 	}
 
 	//会话不存在，单聊会话ID，如果是群聊，要显式创建，所以会话id不为空
-	if len(msg.ConversationId) == 0 {
+	if s.repo.ExistConversation(ctx, msg.ConversationId) {
 		convs := []string{req.UserId, req.TargetId}
 		if msg.ConversationId, err = s.createConversationList(ctx, convs); err != nil {
 			return nil, v1.ErrInternalServerError
@@ -203,6 +203,10 @@ func (s *chatService) GetUserConversationList(ctx context.Context, userId string
 		"rows":  resp,
 		"total": total,
 	}, nil
+}
+
+func (s *chatService) checkConversationExist(ctx context.Context, convId string) bool {
+	return s.repo.ExistConversation(ctx, convId)
 }
 
 func (s *chatService) createConversationList(ctx context.Context, userIds []string) (convId string, err error) {

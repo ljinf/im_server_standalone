@@ -74,7 +74,7 @@ func (s *chatService) CreateMsg(ctx context.Context, req *v1.SendMsgReq) (*v1.Se
 	}
 
 	//会话不存在，单聊会话ID，如果是群聊，要显式创建，所以会话id不为空
-	if s.repo.ExistConversation(ctx, msg.ConversationId) {
+	if !s.repo.ExistConversation(ctx, msg.ConversationId) {
 		convs := []string{req.UserId, req.TargetId}
 		if msg.ConversationId, err = s.createConversationList(ctx, convs); err != nil {
 			return nil, v1.ErrInternalServerError

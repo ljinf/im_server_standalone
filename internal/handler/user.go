@@ -119,12 +119,13 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.userService.UpdateProfile(ctx, userId, &req); err != nil {
+	userInfo, err := h.userService.UpdateProfile(ctx, userId, &req)
+	if err != nil {
 		v1.HandleError(ctx, http.StatusInternalServerError, v1.ErrInternalServerError, nil)
 		return
 	}
 
-	v1.HandleSuccess(ctx, nil)
+	v1.HandleSuccess(ctx, userInfo)
 }
 
 func (h *UserHandler) SearchProfile(ctx *gin.Context) {

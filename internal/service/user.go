@@ -17,7 +17,7 @@ type UserService interface {
 	// 用户信息
 	GetProfile(ctx context.Context, userId string) (*v1.GetProfileResponseData, error)
 	GetProfileByEmail(ctx context.Context, email string) (*v1.GetProfileResponseData, error)
-	UpdateProfile(ctx context.Context, userId string, req *v1.UpdateProfileRequest) error
+	UpdateProfile(ctx context.Context, userId string, req *v1.UpdateProfileRequest) (*v1.GetProfileResponseData, error)
 	// 更新注册表
 	UpdateRegisterInfo(ctx context.Context, userId string, req *v1.UpdateRegisterInfoRequest) error
 }
@@ -142,10 +142,10 @@ func (s *userService) GetProfile(ctx context.Context, userId string) (*v1.GetPro
 	}, nil
 }
 
-func (s *userService) UpdateProfile(ctx context.Context, userId string, req *v1.UpdateProfileRequest) error {
+func (s *userService) UpdateProfile(ctx context.Context, userId string, req *v1.UpdateProfileRequest) (*v1.GetProfileResponseData, error) {
 	user, err := s.userRepo.GetByID(ctx, userId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	user.Avatar = req.Avatar
@@ -160,10 +160,17 @@ func (s *userService) UpdateProfile(ctx context.Context, userId string, req *v1.
 	}
 
 	if err = s.userRepo.UpdateUserInfo(ctx, user); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &v1.GetProfileResponseData{
+		UserId:        user.UserId,
+		NickName:      user.NickName,
+		Avatar:        user.Avatar,
+		Background:    user.Background,
+		SelfSignature: user.SelfSignature,
+		Gender:        user.Gender,
+	}, nil
 }
 
 func (s *userService) GetProfileByEmail(ctx context.Context, email string) (*v1.GetProfileResponseData, error) {

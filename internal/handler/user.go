@@ -136,29 +136,21 @@ func (h *UserHandler) SearchProfile(ctx *gin.Context) {
 	)
 
 	var req v1.SearchUserRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err = ctx.ShouldBindJSON(&req); err != nil {
 		v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)
 		return
 	}
 
-	//userId := GetUserIdFromCtx(ctx)
-	//if len(userId) == 0 {
-	//	v1.HandleError(ctx, http.StatusUnauthorized, v1.ErrUnauthorized, nil)
-	//	return
-	//}
-
 	if len(req.UserId) != 0 {
 		user, err = h.userService.GetProfile(ctx, req.UserId)
-		if err != nil {
-			v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)
-			return
-		}
 	} else if len(req.Email) > 0 {
 		user, err = h.userService.GetProfileByEmail(ctx, req.Email)
-		if err != nil {
-			v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)
-			return
-		}
 	}
+
+	if err != nil {
+		v1.HandleError(ctx, http.StatusOK, v1.ErrInternalServerError, nil)
+		return
+	}
+
 	v1.HandleSuccess(ctx, user)
 }

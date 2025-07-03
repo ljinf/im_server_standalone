@@ -7,14 +7,16 @@ import (
 
 // 注册表
 type Register struct {
-	Id        int64          `json:"id" gorm:"primarykey"`
-	UserId    string         `json:"user_id"`
-	Phone     string         `json:"phone"`
-	Email     string         `json:"email"`
-	Password  string         `json:"password"`
-	CreatedAt time.Time      `json:"-"`
-	UpdatedAt time.Time      `json:"-"`
-	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+	Id         int64          `json:"id" gorm:"primarykey"`
+	UserId     string         `json:"user_id"`
+	Phone      string         `json:"phone"`
+	Email      string         `json:"email"`
+	Password   string         `json:"password"`
+	Channel    string         `json:"channel"`     //渠道
+	AppVersion string         `json:"app_version"` //app版本
+	CreatedAt  time.Time      `json:"-"`
+	UpdatedAt  time.Time      `json:"-"`
+	DeletedAt  gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
 func (r *Register) TableName() string {

@@ -120,6 +120,7 @@ func (c *communityService) GetMomentList(ctx context.Context, req *v1.MomentList
 		c.logger.Error(err.Error(), zap.Any("SelectCommunityMomentList", ""))
 	}
 
+	//点赞回显
 	if len(list) > 0 {
 		likes, err := c.repo.SelectUserMomentLikeList(ctx, req.UserId, list[len(list)-1].CreatedAt)
 		if err != nil {

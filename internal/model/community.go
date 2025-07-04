@@ -70,10 +70,19 @@ type MomentCommentResp struct {
 	CommentId string `json:"comment_id"` //评论ID
 	ParentId  string `json:"parent_id"`  //父评论ID
 	MomentId  string `json:"moment_id"`  //时刻ID
-	UserId    string `json:"user_id"`    //用户ID
-	ReplyId   string `json:"reply_id"`   //回复 用户ID
-	Content   string `json:"content"`    //评论内容
-	Status    int    `json:"status"`     //状态，1-审核中 2-正常 3-违规 4-删除
+	//发表人
+	UserId     string `json:"user_id"`     //用户ID
+	NickName   string `json:"nick_name"`   //昵称
+	Avatar     string `json:"avatar"`      //头像
+	UserStatus int    `json:"user_status"` //用户状态    1:正常 2:封禁  3:注销
+
+	//回复某人
+	ReplyId     string `json:"reply_id"`     //回复 用户ID
+	ReplyName   string `json:"reply_name"`   //回复 用户nickname
+	ReplyStatus int    `json:"reply_status"` //用户状态    1:正常 2:封禁  3:注销
+
+	Content   string `json:"content"` //评论内容
+	Status    int    `json:"status"`  //状态，1-审核中 2-正常 3-违规 4-删除
 	CreatedAt int64  `json:"created_at"`
 
 	LikeCount       int `json:"like_count"`        //点赞数

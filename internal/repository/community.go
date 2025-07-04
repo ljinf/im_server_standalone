@@ -151,6 +151,10 @@ func (r *communityRepository) SelectMomentComment(ctx context.Context, params *v
 		list   []model.MomentCommentResp
 	)
 
+	//查询起始
+	conds = append(conds, "mc.`id`>?")
+	values = append(values, params.Index)
+
 	if len(params.MomentId) > 0 {
 		conds = append(conds, "mc.`moment_id`=?")
 		values = append(values, params.MomentId)
@@ -165,9 +169,11 @@ func (r *communityRepository) SelectMomentComment(ctx context.Context, params *v
 		values = append(values, 0)
 	}
 
-	querySql := "SELECT mc.`id`,mc.`comment_id`,mc.`parent_id`,mc.`moment_id`,mc.`user_id`,mc.`reply_id`,mc.`content`,mc.`status`,mc.`created_at`," +
+	querySql := "SELECT mc.`id`,mc.`comment_id`,mc.`parent_id`,mc.`moment_id`,mc.`user_id`,u.`nick_name`,u.`avatar`,u.`status` `user_status`,mc.`reply_id`,mc.`content`,mc.`status`,mc.`created_at`," +
 		"IFNULL(cc.`like_count`,0)`like_count`,IFNULL(cc.`like_cancel_count`,0)`like_cancel_count`,IFNULL(cc.`comment_count`,0)`comment_count` " +
-		"FROM `moment_comment_list` mc LEFT JOIN `moment_comment_count_list` cc ON cc.`comment_id`=mc.`comment_id` " +
+		"FROM `moment_comment_list` mc " +
+		"INNER JOIN `user_info` u ON u.`user_id`=mc.`user_id` " +
+		"LEFT JOIN `moment_comment_count_list` cc ON cc.`comment_id`=mc.`comment_id` " +
 		"WHERE " + strings.Join(conds, " and ") + " LIMIT ? OFFSET ?"
 
 	err := r.DB(ctx).Raw(querySql, append(values, params.PageSize, (params.PageNum-1)*params.PageSize)...).Find(&list).Error

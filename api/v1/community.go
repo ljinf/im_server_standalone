@@ -42,21 +42,31 @@ type MomentListResp struct {
 }
 
 type MomentCommentListReq struct {
-	UserId    string `json:"user_id"`                      //当前登录的用户
-	ParentId  string `json:"parent_id"`                    //父评论ID
-	MomentId  string `json:"moment_id" binding:"required"` //时刻ID
-	CreatedAt int64  `json:"created_at"`
-	PageNum   int    `json:"page_num"`
-	PageSize  int    `json:"page_size"`
+	UserId   string `json:"user_id"`                      //当前登录的用户
+	ParentId string `json:"parent_id"`                    //父评论ID
+	MomentId string `json:"moment_id" binding:"required"` //时刻ID
+	// 查询偏移量
+	Index    int64 `json:"index"`
+	PageNum  int   `json:"page_num"`
+	PageSize int   `json:"page_size"`
 }
 
 type MomentCommentListResp struct {
-	Id              int64  `json:"id"`
-	CommentId       string `json:"comment_id"`        //评论ID
-	ParentId        string `json:"parent_id"`         //父评论ID
-	MomentId        string `json:"moment_id"`         //时刻ID
-	UserId          string `json:"user_id"`           //用户ID
-	ReplyId         string `json:"reply_id"`          //回复 用户ID
+	Id        int64  `json:"id"`
+	CommentId string `json:"comment_id"` //评论ID
+	ParentId  string `json:"parent_id"`  //父评论ID
+	MomentId  string `json:"moment_id"`  //时刻ID
+	//发表人
+	UserId     string `json:"user_id"`     //用户ID
+	NickName   string `json:"nick_name"`   //昵称
+	Avatar     string `json:"avatar"`      //头像
+	UserStatus int    `json:"user_status"` //用户状态    1:正常 2:封禁  3:注销
+
+	//回复某人
+	ReplyId     string `json:"reply_id"`     //回复 用户ID
+	ReplyName   string `json:"reply_name"`   //回复 用户nickname
+	ReplyStatus int    `json:"reply_status"` //用户状态    1:正常 2:封禁  3:注销
+
 	Content         string `json:"content"`           //评论内容
 	LikeCount       int    `json:"like_count"`        //点赞数
 	LikeCancelCount int    `json:"like_cancel_count"` //点赞取消数

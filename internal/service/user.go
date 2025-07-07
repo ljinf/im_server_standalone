@@ -139,6 +139,7 @@ func (s *userService) GetProfile(ctx context.Context, userId string) (*v1.GetPro
 		Background:    user.Background,
 		SelfSignature: user.SelfSignature,
 		Gender:        user.Gender,
+		Status:        user.Status,
 	}, nil
 }
 
@@ -170,6 +171,7 @@ func (s *userService) UpdateProfile(ctx context.Context, userId string, req *v1.
 		Background:    user.Background,
 		SelfSignature: user.SelfSignature,
 		Gender:        user.Gender,
+		Status:        user.Status,
 	}, nil
 }
 
@@ -188,5 +190,6 @@ func (s *userService) GetProfileByEmail(ctx context.Context, email string) (*v1.
 		Background:    user.Background,
 		SelfSignature: user.SelfSignature,
 		Gender:        user.Gender,
+		Status:        user.Status,
 	}, nil
 }

@@ -39,6 +39,7 @@ type GetProfileResponseData struct {
 	Background    string `json:"background"`     //个人背景图
 	SelfSignature string `json:"self_signature"` //个性签名
 	Gender        int    `json:"gender"`         //性别
+	Status        int    `json:"status"`         //用户状态    1:正常 2:封禁  3:注销
 }
 type GetProfileResponse struct {
 	Response

@@ -156,6 +156,15 @@ func (h *communityHandler) GetMomentCommentList(ctx *gin.Context) {
 
 	list := h.srv.GetMomentCommentList(ctx, &param)
 
+	for index := range list {
+		if list[index].ReplyId != "0" {
+			if profile, err := h.userSrv.GetProfile(ctx, list[index].ReplyId); err == nil {
+				list[index].ReplyName = profile.NickName
+				list[index].ReplyStatus = profile.Status
+			}
+		}
+	}
+
 	v1.HandleSuccess(ctx, list)
 }
 

@@ -271,9 +271,9 @@ func (c *communityService) GetMomentCommentList(ctx context.Context, req *v1.Mom
 			c.logger.Error(err.Error(), zap.Any("SelectUserCommentLikeList",
 				fmt.Sprintf("%v %v", req.UserId, resp[0].CreatedAt)))
 		}
-		for index := range likes {
-			for _, v := range resp {
-				if resp[index].CommentId == v.CommentId {
+		for _, like := range likes {
+			for index := range resp {
+				if resp[index].CommentId == like.CommentId {
 					resp[index].LikeStatus = 1
 					break
 				}

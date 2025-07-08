@@ -236,6 +236,7 @@ func (c *communityService) AddMomentComment(ctx context.Context, req *v1.AddMome
 	}
 
 	return &v1.MomentCommentListResp{
+		Id:              commentInfo.Id,
 		CommentId:       commentInfo.CommentId,
 		ParentId:        commentInfo.ParentId,
 		MomentId:        commentInfo.MomentId,

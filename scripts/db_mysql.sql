@@ -7,20 +7,22 @@ USE
 DROP TABLE IF EXISTS `register`;
 CREATE TABLE `register`
 (
-    `id`          bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-    `user_id`     bigint(20) unsigned NOT NULL COMMENT '用户id',
-    `phone`       varchar(11) DEFAULT NULL COMMENT '手机号',
-    `email`       varchar(64) DEFAULT NULL COMMENT '邮箱',
-    `password`    varchar(64) DEFAULT NULL COMMENT '密码',
-    `channel`     varchar(64) DEFAULT NULL COMMENT '渠道',
-    `app_version` varchar(32) DEFAULT NULL COMMENT '注册app版本',
-    `created_at`  datetime    DEFAULT NULL,
-    `updated_at`  datetime    DEFAULT NULL,
-    `deleted_at`  datetime    DEFAULT NULL,
+    `id`           bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+    `user_id`      bigint(20) unsigned NOT NULL COMMENT '用户id',
+    `account`      varchar(11) DEFAULT NULL COMMENT '账号',
+    `password`     varchar(64) DEFAULT NULL COMMENT '密码',
+    `account_type` tinyint(2) DEFAULT 3 COMMENT '账号类型 1-email 2-手机号 3-微信',
+    `channel`      varchar(64) DEFAULT NULL COMMENT '渠道',
+    `app_version`  varchar(32) DEFAULT NULL COMMENT '注册app版本',
+    `created_at`   datetime    DEFAULT NULL,
+    `updated_at`   datetime    DEFAULT NULL,
+    `deleted_at`   datetime    DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `user` (`user_id`),
-    KEY           user_phone_email_pass(`user_id`,`phone`,`email`,`password`),
-    KEY           `deleted_idx` (`deleted_at`)
+    UNIQUE KEY account_idx(`account`,`account_type`),
+    KEY            user_phone_email_pass(`account`,`account_type`,`user_id`),
+    KEY            user_indx(`user_id`),
+    KEY            `deleted_idx` (`deleted_at`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT '注册信息表';
 
 alter table `register`
@@ -54,6 +56,9 @@ CREATE TABLE `user_info`
 
 alter table `user_info`
     add column `background` varchar(255) DEFAULT NULL COMMENT '个人背景' after `avatar`;
+
+alter table `user_info`
+    add column `init_info` tinyint(2) DEFAULT NULL COMMENT '是否初始化基本信息' after `self_signature`;
 
 -- 聊天相关
 

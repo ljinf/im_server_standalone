@@ -9,10 +9,12 @@ var (
 	ErrInternalServerError = newError(500, "Internal Server Error")
 
 	// more biz errors
-	ErrEmailAlreadyUse      = newError(1001, "The email is already in use.")
-	ErrGenerateFromPassword = newError(1002, "密码加密异常")
-	ErrGenerateUserID       = newError(1003, "创建用户ID失败")
-	ErrPasswordFailed       = newError(1004, "账号密码错误")
+	ErrEmailAlreadyUse         = newError(1001, "The email is already in use.")
+	ErrGenerateFromPassword    = newError(1002, "密码加密异常")
+	ErrGenerateUserID          = newError(1003, "创建用户ID失败")
+	ErrPasswordFailed          = newError(1004, "账号密码错误")
+	ErrAccountAlreadyUse       = newError(1005, "The account is already in use.")
+	ErrVerificationCodeInvalid = newError(1006, "验证码无效")
 
 	// 申请关系
 	ErrAddApplyFriendshipFailed = newError(2001, "申请失败")

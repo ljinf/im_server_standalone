@@ -20,6 +20,21 @@ func NewUserHandler(handler *Handler, userService service.UserService) *UserHand
 	}
 }
 
+func (h *UserHandler) VerificationCode(ctx *gin.Context) {
+	req := new(v1.CodeRequest)
+	if err := ctx.ShouldBindJSON(req); err != nil {
+		v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)
+		return
+	}
+
+	if err := h.userService.SendCode(ctx, req); err != nil {
+		v1.HandleError(ctx, http.StatusOK, err, nil)
+		return
+	}
+
+	v1.HandleSuccess(ctx, nil)
+}
+
 // Register godoc
 // @Summary 用户注册
 // @Schemes
@@ -37,13 +52,14 @@ func (h *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.userService.Register(ctx, req); err != nil {
+	resp, err := h.userService.Register(ctx, req)
+	if err != nil {
 		h.logger.WithContext(ctx).Error("userService.Register error", zap.Error(err))
 		v1.HandleError(ctx, http.StatusInternalServerError, err, nil)
 		return
 	}
 
-	v1.HandleSuccess(ctx, nil)
+	v1.HandleSuccess(ctx, resp)
 }
 
 // Login godoc
@@ -63,14 +79,12 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	token, err := h.userService.Login(ctx, &req)
+	resp, err := h.userService.Login(ctx, &req)
 	if err != nil {
-		v1.HandleError(ctx, http.StatusUnauthorized, v1.ErrUnauthorized, nil)
+		v1.HandleError(ctx, http.StatusOK, err, nil)
 		return
 	}
-	v1.HandleSuccess(ctx, v1.LoginResponseData{
-		AccessToken: token,
-	})
+	v1.HandleSuccess(ctx, resp)
 }
 
 // GetProfile godoc
@@ -141,11 +155,7 @@ func (h *UserHandler) SearchProfile(ctx *gin.Context) {
 		return
 	}
 
-	if len(req.UserId) != 0 {
-		user, err = h.userService.GetProfile(ctx, req.UserId)
-	} else if len(req.Email) > 0 {
-		user, err = h.userService.GetProfileByEmail(ctx, req.Email)
-	}
+	user, err = h.userService.GetProfile(ctx, req.UserId)
 
 	if err != nil {
 		v1.HandleError(ctx, http.StatusOK, v1.ErrInternalServerError, nil)

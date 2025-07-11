@@ -7,13 +7,27 @@ import (
 	"fmt"
 	"github.com/ljinf/im_server_standalone/internal/model"
 	"github.com/redis/go-redis/v9"
+	"time"
 )
 
 var (
-	ctx                    = context.Background()
-	cachePrefix            = "im:server:"
-	AccountInfoCachePrefix = cachePrefix + "user:info:"
+	ctx                      = context.Background()
+	cachePrefix              = "im:server:"
+	AccountInfoCachePrefix   = cachePrefix + "user:info:"
+	VerificationCodeCacheKey = cachePrefix + "verificationcode"
+	VerificationCodeExpire   = 300
 )
+
+// 验证码
+func SetVerificationCodeCache(rdb *redis.Client, account, code string) error {
+	key := fmt.Sprintf("%v:%v", VerificationCodeCacheKey, account)
+	return rdb.Set(ctx, key, code, time.Duration(VerificationCodeExpire)*time.Second).Err()
+}
+
+func GetVerificationCodeCache(rdb *redis.Client, account string) (string, error) {
+	key := fmt.Sprintf("%v:%v", VerificationCodeCacheKey, account)
+	return rdb.Get(ctx, key).Result()
+}
 
 // 不过期
 func SetAccountInfoCache(rdb *redis.Client, info ...model.AccountInfo) error {

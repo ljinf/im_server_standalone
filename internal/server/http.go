@@ -64,6 +64,7 @@ func NewHTTPServer(
 		{
 			noAuthRouter.POST("/register", userHandler.Register)
 			noAuthRouter.POST("/login", userHandler.Login)
+			noAuthRouter.POST("/verificationCode", userHandler.VerificationCode)
 			//可通过 http://localhost:8080/static/css/style.css 访问 ./xx/css/style.css 文件。
 			noAuthRouter.Static("/static", conf.GetString("assets.dir")) // 将 ./xx 目录映射到 /static 路径
 		}

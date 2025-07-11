@@ -185,8 +185,6 @@ func (r *relationshipService) GetRelationshipList(ctx context.Context, userId st
 		}
 		resp = append(resp, v1.RelationshipRespData{
 			UserId:           accountInfo.UserId,
-			Phone:            accountInfo.Phone,
-			Email:            accountInfo.Email,
 			NickName:         accountInfo.NickName,
 			Avatar:           accountInfo.Avatar,
 			Gender:           accountInfo.Gender,

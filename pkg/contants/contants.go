@@ -1,6 +1,12 @@
 package contants
 
 const (
+	AccountTypeEmail  = 1
+	AccountTypePhone  = 2
+	AccountTypeWechat = 3
+)
+
+const (
 	//申请状态
 	ApplyFriendshipStatusApplying = 1 //申请中
 	ApplyFriendshipStatusPending  = 2 //待处理

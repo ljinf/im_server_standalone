@@ -19,7 +19,7 @@ type UserRepository interface {
 	UpdateUserInfo(ctx context.Context, req *model.UserInfo) error
 
 	GetAccountInfoByID(ctx context.Context, userId string) (*model.AccountInfo, error)
-	GetAccountInfoByEmail(ctx context.Context, account string, accountType int) (*model.AccountInfo, error)
+	GetAccountInfoByAccount(ctx context.Context, account string, accountType int) (*model.AccountInfo, error)
 }
 
 func NewUserRepository(r *Repository) UserRepository {
@@ -102,7 +102,7 @@ func (r *userRepository) GetAccountInfoByID(ctx context.Context, userId string) 
 	}*/
 
 	var info model.AccountInfo
-	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`background`,u.`self_signature`,u.`gender`,u.`init_info`,u.`status`,r.`email`,r.`phone` " +
+	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`background`,u.`self_signature`,u.`gender`,u.`init_info`,u.`status`,r.`account`,r.`account_type` " +
 		"FROM `user_info` u INNER JOIN `register` r ON u.`user_id`=r.`user_id` WHERE u.`user_id`=?"
 	if err := r.DB(ctx).Raw(querySql, userId).Scan(&info).Error; err != nil {
 		return nil, err
@@ -115,9 +115,9 @@ func (r *userRepository) GetAccountInfoByID(ctx context.Context, userId string) 
 	return &info, nil
 }
 
-func (r *userRepository) GetAccountInfoByEmail(ctx context.Context, account string, accountType int) (*model.AccountInfo, error) {
+func (r *userRepository) GetAccountInfoByAccount(ctx context.Context, account string, accountType int) (*model.AccountInfo, error) {
 	var info model.AccountInfo
-	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`background`,u.`self_signature`,u.`gender`,u.`init_info`,u.`status`,r.`email`,r.`phone` " +
+	querySql := "SELECT u.`user_id`,u.`nick_name`,u.`avatar`,u.`background`,u.`self_signature`,u.`gender`,u.`init_info`,u.`status`,r.`account`,r.`account_type` " +
 		"FROM `user_info` u INNER JOIN `register` r ON u.`user_id`=r.`user_id` WHERE r.`account`=? and r.`account_type`=?"
 	if err := r.DB(ctx).Raw(querySql, account, accountType).Scan(&info).Error; err != nil {
 		return nil, err

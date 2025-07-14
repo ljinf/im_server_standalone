@@ -248,6 +248,7 @@ func (s *userService) UpdateProfile(ctx context.Context, userId string, req *v1.
 		return nil, err
 	}
 
+	user.InitInfo = true
 	user.Avatar = req.Avatar
 	user.NickName = req.NickName
 	user.SelfSignature = req.SelfSignature
@@ -275,7 +276,7 @@ func (s *userService) UpdateProfile(ctx context.Context, userId string, req *v1.
 }
 
 func (s *userService) GetProfileByAccount(ctx context.Context, account string, accountType int) (*v1.GetProfileResponseData, error) {
-	user, err := s.userRepo.GetAccountInfoByEmail(ctx, account, contants.AccountTypeEmail)
+	user, err := s.userRepo.GetAccountInfoByAccount(ctx, account, contants.AccountTypeEmail)
 	if err != nil {
 		return nil, err
 	}
